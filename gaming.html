@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Games | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Outfit', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+        h1 { color: #f9a8d4; margin-bottom: 10px; font-size: 2.5rem; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 800px; margin-top: 40px; }
+        .game-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .game-card:hover { transform: translateY(-10px); border-color: #3b82f6; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .game-card i { font-size: 4rem; margin-bottom: 15px; color: #3b82f6; }
+        
+        .game-area { display: none; width: 100%; max-width: 800px; background: #1e293b; padding: 30px; border-radius: 16px; margin-top: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 20px; }
+        .btn:hover { background: #2563eb; }
+        
+        /* Trivia Styles */
+        .option-btn { display: block; width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-align: left; margin-bottom: 10px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .option-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .option-btn.correct { background: #10b981; border-color: #10b981; }
+        .option-btn.wrong { background: #ef4444; border-color: #ef4444; }
+
+        /* Typer Styles */
+        .word-display { font-size: 2.5rem; font-family: monospace; color: #f59e0b; margin: 20px 0; letter-spacing: 2px; }
+        .type-input { width: 100%; padding: 15px; font-size: 1.5rem; font-family: monospace; background: rgba(0,0,0,0.3); border: 2px solid #3b82f6; border-radius: 8px; color: white; text-align: center; outline: none; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <a href="front.html" style="position: absolute; top: 20px; left: 20px; color:#94a3b8; text-decoration:none; font-size:1.1rem; display:flex; align-items:center; gap:5px;"><i class='bx bx-arrow-back'></i> Back to Dashboard</a>
+    
+    <div id="main-menu" style="text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <h1><i class='bx bx-joystick'></i> Learning Arcade</h1>
+        <p style="color: #94a3b8; font-size: 1.1rem;">Play games, improve your skills, and earn points!</p>
+        
+        <div class="menu-grid">
+            <div class="game-card" onclick="openGame('trivia')">
+                <i class='bx bx-brain'></i>
+                <h2>Dev Trivia</h2>
+                <p style="color:#94a3b8;">Test your programming knowledge with rapid-fire questions.</p>
+            </div>
+            <div class="game-card" onclick="openGame('typer')">
+                <i class='bx bx-keyboard'></i>
+                <h2>Syntax Typer</h2>
+                <p style="color:#94a3b8;">Improve your coding speed by typing syntax accurately.</p>
+            </div>
+            <div class="game-card" onclick="openGame('bughunt')">
+                <i class='bx bx-bug'></i>
+                <h2>Bug Squasher</h2>
+                <p style="color:#94a3b8;">Identify and fix syntax errors in code snippets.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dev Trivia Game -->
+    <div id="trivia-game" class="game-area">
+        <div class="stats">
+            <span>Score: <span id="trivia-score" style="color:#10b981;">0</span></span>
+            <span>Question: <span id="trivia-qnum" style="color:#3b82f6;">1/5</span></span>
+        </div>
+        <h2 id="trivia-question" style="margin-bottom: 20px; font-size: 1.5rem; line-height: 1.4;">Loading question...</h2>
+        <div id="trivia-options"></div>
+        <div style="text-align: right;"><button class="btn" id="trivia-next" onclick="nextTrivia()" style="display:none;">Next Question</button></div>
+        <div style="text-align: center; margin-top: 20px;"><button class="btn" onclick="exitGame()" style="background: rgba(255,255,255,0.1);">Quit Game</button></div>
+    </div>
+
+    <!-- Syntax Typer Game -->
+    <div id="typer-game" class="game-area" style="text-align: center;">
+        <div class="stats">
+            <span>Time: <span id="typer-time" style="color:#ef4444;">60s</span></span>
+            <span>Score: <span id="typer-score" style="color:#10b981;">0</span></span>
+        </div>
+        <p style="color:#94a3b8; font-size: 1.1rem; margin-bottom: 10px;">Read the question and type the exact syntax:</p>
+        <h3 id="typer-question" style="color:#3b82f6; margin-bottom: 20px; font-size: 1.3rem;">Question goes here</h3>
+        <div class="word-display" id="typer-word" style="display:none;"></div>
+        <div style="display:flex; gap:10px; max-width: 500px; margin: 0 auto;">
+            <input type="text" id="typer-input" class="type-input" placeholder="Type the syntax here..." autocomplete="off" onkeydown="if(event.key==='Enter') checkType()">
+            <button class="btn" style="margin-top: 0;" onclick="checkType()">Submit</button>
+        </div>
+        <p id="typer-hint" style="color:#f59e0b; margin-top:10px; font-size:0.9rem; display:none;">Hint: </p>
+        <h2 id="typer-result" style="color: #10b981; display: none; margin-top: 20px;">Time's Up! Final Score: 0</h2>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" id="typer-restart" onclick="startTyper()" style="display:none; margin-right:10px;">Play Again</button>
+            <button class="btn" onclick="exitGame()" style="background: rgba(255,255,255,0.1);">Quit Game</button>
+        </div>
+    </div>
+
+    <!-- Bug Squasher Game -->
+    <div id="bughunt-game" class="game-area">
+        <div class="stats">
+            <span>Bugs Squashed: <span id="bug-score" style="color:#10b981;">0</span></span>
+            <span>Level: <span id="bug-level" style="color:#3b82f6;">1/5</span></span>
+        </div>
+        <p style="color:#94a3b8; font-size: 1.1rem; margin-bottom: 10px;">Find the bug in this code and select the correct fix:</p>
+        <pre id="bug-code" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid #ef4444; color: #f8fafc; font-family: monospace; font-size: 1.2rem; overflow-x: auto; margin-bottom: 20px;">Loading...</pre>
+        
+        <div id="bug-options"></div>
+        
+        <div style="text-align: right;"><button class="btn" id="bug-next" onclick="nextBug()" style="display:none;">Next Bug</button></div>
+        <div style="text-align: center; margin-top: 20px;"><button class="btn" onclick="exitGame()" style="background: rgba(255,255,255,0.1);">Quit Game</button></div>
+    </div>
+
+    <script>
+        // Global Game Control
+        function openGame(game) {
+            document.getElementById('main-menu').style.display = 'none';
+            if (game === 'trivia') {
+                document.getElementById('trivia-game').style.display = 'block';
+                startTrivia();
+            } else if (game === 'typer') {
+                document.getElementById('typer-game').style.display = 'block';
+                startTyper();
+            } else if (game === 'bughunt') {
+                document.getElementById('bughunt-game').style.display = 'block';
+                startBugHunt();
+            }
+        }
+        function exitGame() {
+            document.getElementById('trivia-game').style.display = 'none';
+            document.getElementById('typer-game').style.display = 'none';
+            document.getElementById('bughunt-game').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            if(typerInterval) clearInterval(typerInterval);
+        }
+
+        // --- TRIVIA GAME LOGIC ---
+        const triviaDB = [
+            { q: "What does HTML stand for?", opts: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language"], ans: 0 },
+            { q: "Which property is used to change the background color in CSS?", opts: ["color", "bgcolor", "background-color", "background"], ans: 2 },
+            { q: "Inside which HTML element do we put the JavaScript?", opts: ["<scripting>", "<script>", "<javascript>", "<js>"], ans: 1 },
+            { q: "How do you write 'Hello World' in an alert box?", opts: ["msg('Hello World');", "alertBox('Hello World');", "alert('Hello World');"], ans: 2 },
+            { q: "Which SQL statement is used to extract data from a database?", opts: ["GET", "OPEN", "EXTRACT", "SELECT"], ans: 3 }
+        ];
+        let currentQ = 0, triviaScore = 0;
+
+        function startTrivia() {
+            currentQ = 0; triviaScore = 0;
+            document.getElementById('trivia-score').textContent = '0';
+            loadTriviaQuestion();
+        }
+        function loadTriviaQuestion() {
+            if (currentQ >= triviaDB.length) {
+                document.getElementById('trivia-question').textContent = `Game Over! You scored ${triviaScore}/${triviaDB.length}`;
+                document.getElementById('trivia-options').innerHTML = '';
+                document.getElementById('trivia-next').style.display = 'none';
+                return;
+            }
+            document.getElementById('trivia-qnum').textContent = `${currentQ + 1}/${triviaDB.length}`;
+            document.getElementById('trivia-next').style.display = 'none';
+            
+            const qData = triviaDB[currentQ];
+            document.getElementById('trivia-question').textContent = qData.q;
+            
+            const optsHtml = qData.opts.map((opt, i) => `<button class="option-btn" onclick="checkTrivia(${i}, this)">${opt}</button>`).join('');
+            document.getElementById('trivia-options').innerHTML = optsHtml;
+        }
+        function checkTrivia(selected, btn) {
+            const correct = triviaDB[currentQ].ans;
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+            
+            if (selected === correct) {
+                btn.classList.add('correct');
+                triviaScore++;
+                document.getElementById('trivia-score').textContent = triviaScore;
+            } else {
+                btn.classList.add('wrong');
+                buttons[correct].classList.add('correct');
+            }
+            document.getElementById('trivia-next').style.display = 'inline-block';
+        }
+        function nextTrivia() {
+            currentQ++;
+            loadTriviaQuestion();
+        }
+
+        // --- SYNTAX TYPER LOGIC ---
+        const syntaxQA = [
+            { q: "Print 'Hello World' to the console in JavaScript", a: "console.log('Hello World')" },
+            { q: "Select an HTML element with the id 'app'", a: "document.getElementById('app')" },
+            { q: "CSS rule to make a flex container", a: "display: flex;" },
+            { q: "CSS rule to center text", a: "text-align: center;" },
+            { q: "SQL query to select all columns from the 'users' table", a: "SELECT * FROM users" },
+            { q: "Declare a constant array named 'data' in JS", a: "const data = []" },
+            { q: "HTML tag for a hyperlink", a: "<a>" },
+            { q: "Git command to commit with message 'fix'", a: "git commit -m 'fix'" }
+        ];
+        let typerScore = 0, typerTime = 60, typerInterval;
+        let currentQA = null;
+
+        function startTyper() {
+            typerScore = 0; typerTime = 60;
+            document.getElementById('typer-score').textContent = '0';
+            document.getElementById('typer-time').textContent = '60s';
+            document.getElementById('typer-input').value = '';
+            document.getElementById('typer-input').disabled = false;
+            document.getElementById('typer-input').focus();
+            document.getElementById('typer-result').style.display = 'none';
+            document.getElementById('typer-restart').style.display = 'none';
+            document.getElementById('typer-hint').style.display = 'none';
+            
+            nextWord();
+            if(typerInterval) clearInterval(typerInterval);
+            typerInterval = setInterval(() => {
+                typerTime--;
+                document.getElementById('typer-time').textContent = typerTime + 's';
+                if(typerTime <= 0) {
+                    clearInterval(typerInterval);
+                    document.getElementById('typer-input').disabled = true;
+                    document.getElementById('typer-result').textContent = `Time's Up! Final Score: ${typerScore}`;
+                    document.getElementById('typer-result').style.display = 'block';
+                    document.getElementById('typer-restart').style.display = 'inline-block';
+                    document.getElementById('typer-hint').textContent = `The last answer was: ${currentQA.a}`;
+                    document.getElementById('typer-hint').style.display = 'block';
+                }
+            }, 1000);
+        }
+        function nextWord() {
+            currentQA = syntaxQA[Math.floor(Math.random() * syntaxQA.length)];
+            document.getElementById('typer-question').textContent = currentQA.q;
+            document.getElementById('typer-hint').style.display = 'none';
+        }
+        function checkType() {
+            const input = document.getElementById('typer-input').value.trim();
+            if (input === currentQA.a) {
+                typerScore += 10;
+                document.getElementById('typer-score').textContent = typerScore;
+                document.getElementById('typer-input').value = '';
+                nextWord();
+            } else {
+                // Visual feedback for wrong answer
+                const inputEl = document.getElementById('typer-input');
+                inputEl.style.borderColor = '#ef4444';
+                setTimeout(() => inputEl.style.borderColor = '#3b82f6', 500);
+                
+                // Show hint immediately on wrong answer
+                document.getElementById('typer-hint').style.display = 'block';
+                document.getElementById('typer-hint').textContent = "Hint: " + currentQA.a;
+            }
+        }
+
+        // --- BUG SQUASHER LOGIC ---
+        const bugDB = [
+            { code: "const x = 10\nconsole.log(X);", opts: ["Change X to x", "Add semicolon after X", "Remove const"], ans: 0 },
+            { code: "let arr = [1, 2, 3];\nfor(let i=0; i<=arr.length; i++) {\n  console.log(arr[i]);\n}", opts: ["Change i<= to i<", "Change let to const", "Remove arr.length"], ans: 0 },
+            { code: "function greet(name) {\n  return 'Hello ' + name\n}\ngreet();", opts: ["Add missing parameter", "Remove return", "Add semicolon"], ans: 0 },
+            { code: "if (user === null) {\n  login()\n} else {\n  logout()\n", opts: ["Add missing closing brace }", "Remove else", "Change === to =="], ans: 0 },
+            { code: "document.getElementById('app');", opts: ["Change ById to ById()", "Change getElementById to getElementById", "Add # to app"], ans: 1 }
+        ];
+        let currentBug = 0, bugScore = 0;
+
+        function startBugHunt() {
+            currentBug = 0; bugScore = 0;
+            document.getElementById('bug-score').textContent = '0';
+            loadBug();
+        }
+        function loadBug() {
+            if (currentBug >= bugDB.length) {
+                document.getElementById('bug-code').textContent = `Game Over! You squashed ${bugScore} bugs.`;
+                document.getElementById('bug-options').innerHTML = '';
+                document.getElementById('bug-next').style.display = 'none';
+                return;
+            }
+            document.getElementById('bug-level').textContent = `${currentBug + 1}/${bugDB.length}`;
+            document.getElementById('bug-next').style.display = 'none';
+            
+            const qData = bugDB[currentBug];
+            document.getElementById('bug-code').textContent = qData.code;
+            
+            const optsHtml = qData.opts.map((opt, i) => `<button class="option-btn" onclick="checkBug(${i}, this)">${opt}</button>`).join('');
+            document.getElementById('bug-options').innerHTML = optsHtml;
+        }
+        function checkBug(selected, btn) {
+            const correct = bugDB[currentBug].ans;
+            const buttons = document.querySelectorAll('#bug-options .option-btn');
+            buttons.forEach(b => b.disabled = true);
+            
+            if (selected === correct) { btn.classList.add('correct'); bugScore++; document.getElementById('bug-score').textContent = bugScore; } 
+            else { btn.classList.add('wrong'); buttons[correct].classList.add('correct'); }
+            document.getElementById('bug-next').style.display = 'inline-block';
+        }
+        function nextBug() { currentBug++; loadBug(); }
+    </script>
+</body>
+</html>

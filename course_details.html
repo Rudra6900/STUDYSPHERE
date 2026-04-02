@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+    <link rel="stylesheet" href="all.css">
+    <style>
+        body { padding-top: 100px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .course-header { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .course-img { width: 100%; height: 300px; object-fit: cover; border-radius: 12px; background: #334155; }
+        .price-tag { font-size: 2rem; color: #3b82f6; font-weight: 700; }
+        .enroll-btn { background: #3b82f6; color: white; border: none; padding: 15px 30px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.3s; }
+        .enroll-btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .back-link { color: #94a3b8; text-decoration: none; display: flex; align-items: center; gap: 5px; margin-bottom: 20px; font-weight: 500; }
+        .back-link:hover { color: white; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .modal-content { background: #1e293b; margin: 15% auto; padding: 30px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; border-radius: 16px; position: relative; animation: slideUp 0.3s; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #94a3b8; }
+        .close-modal:hover { color: white; }
+        /* Switch CSS */
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; } input:checked + .slider:before { transform: translateX(22px); }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Confetti Canvas -->
+        <canvas id="confetti-canvas" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999;"></canvas>
+        
+        <a href="classes.html" class="back-link"><span class="material-symbols-rounded">arrow_back</span> Back to Classes</a>
+        
+        <div id="course-content" style="display:none;">
+            <div class="course-header">
+                <img id="detail-img" class="course-img" src="" alt="Course Image" onerror="this.style.display='none'">
+                <div>
+                    <h1 id="detail-title" style="margin: 0 0 10px 0; font-size: 2.5rem;">Loading...</h1>
+                    <p style="color: #94a3b8; line-height: 1.6;">Master this subject with our comprehensive curriculum. This course includes video lectures, practical assignments, and a certificate of completion.</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div class="price-tag" id="detail-price">₹0.00</div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.9rem; color: #94a3b8;">Duration: 8 Weeks</span>
+                        <span style="display: block; font-size: 0.9rem; color: #94a3b8;">Level: Intermediate</span>
+                    </div>
+                </div>
+                
+                <!-- Points Banner shown directly on the course page -->
+                <div id="points-banner-main" style="display:none; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-rounded" style="color: #f59e0b; font-size: 24px;">toll</span>
+                        <div>
+                            <p style="margin: 0; color: white; font-weight: bold;">Use Points for Discounts!</p>
+                            <p style="margin: 0; font-size: 0.85rem; color: #cbd5e1;">You have <span id="available-points-main">0</span> points available (Up to 60% off).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="enroll-btn" onclick="enrollNow()">Enroll Now</button>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1);">
+                <h3>What you'll learn</h3>
+                <ul style="color: #cbd5e1; line-height: 2; list-style-type: none; padding: 0;">
+                    <li>✅ Comprehensive understanding of core concepts</li>
+                    <li>✅ Practical skills through real-world projects</li>
+                    <li>✅ Industry best practices and workflow</li>
+                    <li>✅ Certificate of completion</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="loading" style="text-align: center; padding: 50px; color: #94a3b8;">Loading course details...</div>
+        <div id="error-msg" style="display: none; text-align: center; padding: 50px; color: #ef4444;">Course not found.</div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePaymentModal()">&times;</span>
+            <h2 style="margin-top: 0; margin-bottom: 20px;">Complete Payment</h2>
+            <p style="color: #94a3b8; margin-bottom: 10px;">You are enrolling in:</p>
+            <h3 id="pay-course-name" style="color: white; margin-bottom: 15px;"></h3>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #94a3b8;">Total Amount:</span>
+                <span id="pay-amount" style="color: #3b82f6; font-size: 1.5rem; font-weight: bold;"></span>
+            </div>
+            
+            <!-- Points Section -->
+            <div id="points-section" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="text-align: left;">
+                        <h4 style="margin: 0 0 5px 0; color: #f59e0b;">StudySphere Points</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: #cbd5e1;">Available: <span id="available-points">0</span> (10 pts = ₹1)</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="use-points-toggle" onchange="calculateDiscount()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <p id="discount-text" style="margin: 10px 0 0 0; font-size: 0.85rem; color: #10b981; display: none; text-align: left;">- ₹<span id="discount-amount">0</span> applied!</p>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; cursor: pointer;"><input type="radio" name="paymethod" checked> UPI / Wallets</label>
+                <label style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;"><input type="radio" name="paymethod"> Credit / Debit Card</label>
+            </div>
+            
+            <button class="enroll-btn" onclick="processPayment()" style="background: #10b981;">Pay Now</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUTO-REDIRECT FIX FOR SESSIONS ---
+        // If on 127.0.0.1 (Live Server), redirect to localhost/practice (XAMPP) so PHP sessions work.
+        if (window.location.hostname === '127.0.0.1') {
+            let path = window.location.pathname;
+            // Ensure path includes '/practice' for XAMPP structure
+            if (!path.includes('/practice')) {
+                path = '/practice' + path;
+            }
+            window.location.href = 'http://localhost' + path + window.location.search;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('id');
+        
+        const port = window.location.port;
+        const protocol = window.location.protocol;
+        const API_BASE = (protocol === 'file:' || (port && port !== '80' && port !== '443')) 
+            ? 'http://localhost/practice/' 
+            : '';
+
+        let currentCourse = null;
+        let userPoints = 0;
+        const conversionRate = 10; // 10 points = 1 Rupee
+
+        if (!courseId) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-msg').style.display = 'block';
+        } else {
+            fetch(API_BASE + 'get_public_courses.php')
+                .then(res => res.json())
+                .then(courses => {
+                    const course = courses.find(c => c.id == courseId);
+                    if (course) {
+                        currentCourse = course;
+                        document.getElementById('detail-title').textContent = course.course_name;
+                        document.getElementById('detail-price').textContent = '₹' + course.course_price;
+                        if (course.course_image) {
+                            document.getElementById('detail-img').src = course.course_image;
+                        } else {
+                            document.getElementById('detail-img').style.display = 'none';
+                        }
+                        
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('course-content').style.display = 'block';
+                    } else {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('error-msg').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('loading').innerHTML = 'Error connecting to server.';
+                });
+
+            // Fetch User Points
+            fetch(API_BASE + 'get_points.php', {credentials: 'include'})
+                .then(res => res.json())
+                .then(data => {
+                    // Demo Fallback to 1500 points if user has 0, so the feature can be tested
+                    userPoints = (data.points > 0) ? data.points : 1500;
+                    document.getElementById('available-points').textContent = userPoints;
+                    document.getElementById('points-section').style.display = 'block';
+                    document.getElementById('available-points-main').textContent = userPoints;
+                    document.getElementById('points-banner-main').style.display = 'block';
+                })
+                .catch(err => {
+                    // Fallback for demo mode if backend fails
+                    console.warn("Points backend missing. Loading demo points.");
+                    userPoints = 1500;
+                    document.getElementById('available-points').textContent = userPoints;
+                    document.getElementById('points-section').style.display = 'block';
+                    document.getElementById('available-points-main').textContent = userPoints;
+                    document.getElementById('points-banner-main').style.display = 'block';
+                });
+        }
+
+        function calculateDiscount() {
+            if(!currentCourse) return;
+            const usePoints = document.getElementById('use-points-toggle') && document.getElementById('use-points-toggle').checked;
+            let finalPrice = parseFloat(currentCourse.course_price);
+            
+            if(usePoints && userPoints > 0) {
+                let maxDiscountByPoints = userPoints / conversionRate;
+                let maxAllowedDiscount = finalPrice * 0.60; // Max 60% discount
+                let discount = Math.min(maxDiscountByPoints, maxAllowedDiscount);
+                finalPrice -= discount;
+                
+                document.getElementById('discount-amount').textContent = discount.toFixed(2);
+                document.getElementById('discount-text').style.display = 'block';
+                document.getElementById('discount-text').innerHTML = `- ₹<span id="discount-amount">${discount.toFixed(2)}</span> applied! (Max 60% off)`;
+                
+                document.getElementById('pay-amount').innerHTML = `<span style="font-size: 1rem; color: #94a3b8; text-decoration: line-through; margin-right: 10px;">₹${parseFloat(currentCourse.course_price).toFixed(2)}</span>₹${finalPrice.toFixed(2)}`;
+            } else {
+                document.getElementById('discount-text').style.display = 'none';
+                document.getElementById('pay-amount').textContent = '₹' + finalPrice.toFixed(2);
+            }
+        }
+
+        function enrollNow() {
+            if (!currentCourse) return;
+            document.getElementById('pay-course-name').textContent = currentCourse.course_name;
+            document.getElementById('payment-modal').style.display = 'block';
+            calculateDiscount();
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+            if(document.getElementById('use-points-toggle')) document.getElementById('use-points-toggle').checked = false;
+        }
+
+        function processPayment() {
+            const btn = document.querySelector('#payment-modal .enroll-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            // Calculate points to deduct
+            const usePoints = document.getElementById('use-points-toggle') && document.getElementById('use-points-toggle').checked;
+            let pointsApplied = 0;
+            if (usePoints && userPoints > 0) {
+                let maxDiscountByPoints = userPoints / conversionRate;
+                let maxAllowedDiscount = currentCourse.course_price * 0.60;
+                let discount = Math.min(maxDiscountByPoints, maxAllowedDiscount);
+                pointsApplied = Math.floor(discount * conversionRate);
+            }
+
+            // Simulate payment processing delay
+            setTimeout(() => {
+                fetch(API_BASE + 'enroll_course.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ course_id: currentCourse.id, points_used: pointsApplied })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    if (data.success) {
+                        triggerConfetti();
+                        setTimeout(() => {
+                            alert('Payment Successful! You are enrolled.');
+                            window.location.href = 'classes.html'; 
+                        }, 1000); // Wait for confetti
+                    } else {
+                        if (data.message && data.message.toLowerCase().includes('login')) {
+                            href = 'login.html';
+                        } else {
+                            alert(data.message);
+                        }
+                    }
+                    closePaymentModal();
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    console.error(err);
+                    alert('Error processing enrollment.');
+                });
+            }, 1500);
+        }
+
+        // Confetti Animation
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const particleCount = 150;
+            const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100,
+                    gravity: 0.2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+
+                particles.forEach(p => {
+                    if (p.life > 0) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += p.gravity;
+                        p.life -= 1;
+                        p.size *= 0.96;
+
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        activeParticles++;
+                    }
+                });
+
+                if (activeParticles > 0) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

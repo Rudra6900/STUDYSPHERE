@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="all.css"> <!-- Reuse existing styles -->
+    <script>
+        if (window.location.hostname === '127.0.0.1') {
+            let path = window.location.pathname;
+            if (!path.includes('/practice')) path = '/practice' + path;
+            window.location.href = 'http://localhost' + path + window.location.search;
+        }
+    </script>
+    <style>
+        /* Switch CSS from course_details.html */
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; } input:checked + .slider:before { transform: translateX(22px); }
+
+        body { padding: 20px; padding-top: 80px; align-items: flex-start; }
+        .container { max-width: 1200px; margin: 0 auto; width: 100%; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(0,0,0,0.2); color: #94a3b8; }
+        .logout-btn { background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.1); }
+
+        /* Pro Action Buttons */
+        .action-btn-pro {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .action-btn-pro:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        .action-btn-pro i {
+            font-size: 1.5rem;
+        }
+
+        /* --- PROFESSIONAL POPUP MODAL STYLES --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); animation: fadeIn 0.3s; }
+        .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; animation: slideUp 0.3s; }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+        .close-modal:hover { color: white; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Clean Form Inputs */
+        .modal input, .modal select, .modal textarea {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: white; border-radius: 8px; font-family: inherit; box-sizing: border-box;
+        }
+        .modal input:focus, .modal select:focus, .modal textarea:focus { outline: none; border-color: #3b82f6; }
+        .btn.primary { background: #3b82f6; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; display: flex; justify-content: center; }
+        .btn.primary:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="menu" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100; margin:0;">
+        <a href="#" class="link active"><span class="material-symbols-rounded box-icon"><i class='bx bxs-dashboard'></i></span><span class="link-title">Dashboard</span></a>
+        <a href="logout.php" onclick="localStorage.clear()" class="link"><span class="material-symbols-rounded box-icon"><i class='bx bx-log-out'></i></span><span class="link-title">Logout</span></a>
+    </div>
+
+    <div class="container">
+        <div class="header-flex">
+            <div>
+                <h1>Welcome, <span id="teacher-welcome-name"><?php echo htmlspecialchars($teacherName ?? 'Teacher'); ?></span>!</h1>
+                <p style="color: #94a3b8;">Teacher Control Center</p>
+            </div>
+            <div style="display:flex; align-items:center; gap: 15px;">
+                <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); padding:10px 15px; border-radius:8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <label class="switch">
+                        <input type="checkbox" onchange="toggleAvailability(this)">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="font-weight:600; color: #e2e8f0; font-size: 0.9rem;">Available for Doubts</span>
+                </div>
+                <a href="#" onclick="if(confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) window.location.href='delete_account.php';" class="logout-btn" style="border-color: rgba(239, 68, 68, 0.4); color: #ef4444;"><i class='bx bxs-user-x'></i> Delete Account</a>
+                <a href="logout.php" onclick="localStorage.clear()" class="logout-btn"><i class='bx bx-log-out'></i> Logout</a>
+            </div>
+        </div>
+
+        <!-- Quick Actions Toolbar -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <button class="action-btn-pro" id="schedule-class-btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class='bx bx-video-plus'></i>
+                <span>Schedule Live Class</span>
+            </button>
+            <button class="action-btn-pro" id="upload-note-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class='bx bx-cloud-upload'></i>
+                <span>Upload Notes</span>
+            </button>
+            <button class="action-btn-pro" id="upload-video-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class='bx bx-video'></i>
+                <span>Upload Video</span>
+            </button>
+            <button class="action-btn-pro" id="create-assignment-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class='bx bx-task'></i>
+                <span>Create Assignment</span>
+            </button>
+            <button class="action-btn-pro" id="create-course-btn" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+                <i class='bx bx-book-add'></i>
+                <span>Create Course</span>
+            </button>
+        </div>
+
+        <div class="card" style="width: 100%; text-align: left; margin-bottom: 20px; border-left: 4px solid #10b981;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class='bx bx-support' style="color:#10b981;"></i> 1-on-1 Doubt Requests</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Time Requested</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doubt-requests-table-body">
+                        <tr><td colspan="3" style="text-align:center; color:#94a3b8;">No pending requests.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="width: 100%; text-align: left; margin-bottom: 20px;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class='bx bx-calendar-event' style="color:#ef4444;"></i> My Scheduled Classes</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Scheduled Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduled-classes-table-body">
+                        <!-- JS will populate this -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="width: 100%; text-align: left; margin-bottom: 20px; border-left: 4px solid #ec4899;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class='bx bx-book-content' style="color:#ec4899;"></i> My Courses</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course Name</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-courses-table-body">
+                        <tr><td colspan="4" style="text-align:center; color:#94a3b8;">Loading courses...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="width: 100%; text-align: left; margin-bottom: 100px;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class='bx bxs-user-detail' style="color:#3b82f6;"></i> Enrolled Students</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Email</th>
+                            <th>Last Login</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        <!-- JS will populate this -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for Content Management -->
+    <div id="schedule-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Schedule Live Class</h2>
+            <form id="schedule-form">
+                <input type="text" id="schedule-title" placeholder="Class Title (e.g., Intro to React)" required>
+                <input type="datetime-local" id="schedule-time" required>
+                <input type="text" id="schedule-video-id" placeholder="YouTube Video ID (Optional)">
+                <button type="submit" class="btn primary">Schedule Class</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Course Modal -->
+    <div id="create-course-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Create New Course</h2>
+            <p style="color:#94a3b8; margin-bottom: 20px; font-size: 0.9rem;">Platform fee: 20% of your course price will go to StudySphere Admin.</p>
+            <form id="create-course-form">
+                <input type="text" id="t-course-name" placeholder="Course Name (e.g., Advanced PHP)" required>
+                <input type="number" id="t-course-price" placeholder="Price (₹)" required>
+                <input type="file" id="t-course-image" accept="image/*" style="padding: 9px;" required>
+                <button type="submit" class="btn primary">Publish Course</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Course Modal -->
+    <div id="teacher-edit-course-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Edit Course</h2>
+            <form id="teacher-edit-course-form">
+                <input type="hidden" id="edit-t-course-id">
+                <input type="text" id="edit-t-course-name" placeholder="Course Name" required>
+                <input type="number" id="edit-t-course-price" placeholder="Price (₹)" required>
+                <button type="submit" class="btn primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="assignment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Create Assignment</h2>
+            <form id="assignment-form">
+                <input type="text" placeholder="Assignment Title" required>
+                <textarea placeholder="Description" required style="height:100px;"></textarea>
+                <button type="submit" class="btn primary">Upload Assignment</button>
+            </form>
+        </div>
+    </div>
+    <div id="poll-modal" class="modal">
+        <!-- Content for poll creation -->
+    </div>
+    <div id="report-modal" class="modal">
+        <!-- Content for student report -->
+    </div>
+    <div id="notes-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Upload Notes</h2>
+            <form id="notes-form">
+                <input type="text" name="title" id="note-title" placeholder="Note Title (e.g., Chapter 1: HTML Basics)" required>
+                <select name="course" id="note-course">
+                    <option value="">General (No Course)</option>
+                </select>
+                <input type="file" name="note_file" id="note-file" accept=".pdf,.doc,.docx,.txt" required style="padding: 9px;">
+                <button type="submit" class="btn primary">Upload Note</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Video Modal -->
+    <div id="upload-video-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top:0;">Upload Recorded Class</h2>
+            <form id="upload-video-form">
+                <input type="text" id="video-title" placeholder="Class Title (e.g., HTML Basics)" required>
+                <input type="file" id="video-file" accept="video/mp4,video/webm" required style="padding: 9px;">
+                <button type="submit" class="btn primary">Upload Video File</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Live Stream Broadcast Modal -->
+    <div id="live-stream-modal" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 1000px; width: 95%; height: 85vh; display: flex; flex-direction: column;">
+            <h2 id="live-stream-title" style="margin-top:0; color:#ef4444; display: flex; align-items: center; gap: 10px;"><i class='bx bx-broadcast bx-flashing'></i> <span>Live Stream</span></h2>
+            <p style="color: #94a3b8; margin-top: -10px; margin-bottom: 15px;">Your camera and microphone are broadcasting to enrolled students.</p>
+            <div id="teacher-jitsi-container" style="flex:1; background:#000; border-radius:12px; overflow:hidden; position: relative;">
+                <video id="teacher-local-video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                <div id="live-status-indicator" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.7); color:white; padding:8px 15px; border-radius:8px; font-weight:bold;">Starting Camera...</div>
+            </div>
+            <button class="btn" style="margin-top:20px; padding:15px; width:100%; justify-content:center; background:#ef4444; color:white; border:none; font-size: 1.1rem;" onclick="closeLiveStream()">End Live Stream</button>
+        </div>
+    </div>
+
+    <!-- Private 1-on-1 Chat Modal -->
+    <div id="private-chat-modal" class="modal" style="z-index: 4000;">
+        <div class="modal-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 1000px; width: 95%; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow:hidden; background:var(--bg-card);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); background:var(--bg);">
+                <h2 id="private-chat-title" style="margin:0; color:#10b981; display: flex; align-items: center; gap: 10px;"><i class='bx bx-video'></i> <span>1-on-1 Session</span></h2>
+                <button class="btn" style="background: #ef4444; color: white; padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer;" onclick="closePrivateChat()">End Session</button>
+            </div>
+            <div style="flex:1; display:flex; overflow:hidden;">
+                <!-- Simple Video Area -->
+                <div style="flex: 2; background: #0f172a; position: relative; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="text-align: center; animation: pulse-glow 3s infinite;">
+                        <div style="width: 120px; height: 120px; background: var(--accent); border-radius: 50%; display: grid; place-items: center; font-size: 4rem; color: white; margin: 0 auto 15px auto; box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);"><i class='bx bx-user'></i></div>
+                        <div style="color: var(--text); font-weight: 600; font-size: 1.2rem;">Connected</div>
+                    </div>
+                    <!-- Local camera view -->
+                    <video id="local-cam-video" autoplay muted playsinline style="position:absolute; bottom:20px; right:20px; width:150px; height:100px; background:#000; border-radius:12px; border:2px solid rgba(255,255,255,0.2); object-fit:cover;"></video>
+                    <div style="position:absolute; top:20px; left:20px; background:rgba(239,68,68,0.8); color:white; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:12px; letter-spacing:1px; box-shadow:0 2px 10px rgba(0,0,0,0.5);"><i class='bx bx-video-recording bx-flashing'></i> LIVE SESSION</div>
+                </div>
+                <!-- Chat Area -->
+                <div id="private-chat-container" style="flex:1; display:flex; flex-direction:column; background:var(--bg);">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    </script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="teacher.js?v=3.0"></script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doubt Resolution Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <link rel="stylesheet" href="all.css" />
+  <link rel="stylesheet" href="social.css" />
+  <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js" defer></script>
+  <style>
+    body { padding-bottom: 100px; }
+    .menu {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
+        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 30px; border-radius: 50px;
+        display: flex; gap: clamp(20px, 4vw, 40px); box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        width: auto; min-width: 300px; justify-content: center;
+    }
+    .horizontal-scroll { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: none; }
+    .horizontal-scroll::-webkit-scrollbar { display: none; }
+    .course-card { background: rgba(30, 41, 59, 0.5); border-radius: 16px; transition: 0.3s; cursor: pointer; }
+    .course-card:hover { transform: translateY(-5px); background: rgba(30, 41, 59, 0.8); }
+    
+    .leaderboard-rank { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: bold; background: rgba(255,255,255,0.1); }
+    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+    .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: #000; }
+    .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: #000; }
+    
+    .back-dashboard-btn {
+        text-decoration: none; color: white;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 10px 20px; border-radius: 30px;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.95rem; font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex; align-items: center; gap: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .back-dashboard-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div style="display:flex; align-items:center; gap: 20px;">
+        <a href="front.html" class="back-dashboard-btn"><i class='bx bx-arrow-back'></i> Back</a>
+        <h1 style="color:#ef4444; margin:0;"><i class='bx bx-support'></i> Doubt Center</h1>
+    </div>
+  </header>
+
+  <div class="floating-bg">
+      <box-icon name='brain' type='solid' color="white" class="float-item" style="top: 45%; left: 45%; width: 60px; height: 60px; animation-duration: 20s;"></box-icon>
+      <box-icon name='bulb' type='solid' color="white" class="float-item" style="top: 10%; left: 50%; width: 50px; height: 50px; animation-duration: 18s; animation-delay: -15s;"></box-icon>
+  </div>
+
+  <div class="social-container" style="max-width: 1400px; margin: 100px auto 0; padding: 0 20px; display: grid; grid-template-columns: 3fr 1fr; gap: 30px;">
+    
+    <!-- MAIN CONTENT -->
+    <main>
+        <h2 style="margin-top:0; color:var(--text); display:flex; align-items:center; gap:10px;"><span style="font-size:1.8rem;">🤝</span> Peer-to-Peer Mastery</h2>
+        <p style="color:var(--muted); margin-bottom:20px;">Ask questions or solve others' doubts to earn StudySphere Points!</p>
+
+        <div class="post-card create-post" style="border: 1px solid rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);">
+            <textarea id="ask-question-input" placeholder="Ask a question to the community..." style="width:100%; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); color:var(--text); border-radius:12px; padding:14px; font-family:inherit; resize:vertical; min-height:80px; outline:none;"></textarea>
+            
+            <!-- Smart Suggestion AI Box -->
+            <div id="smart-suggestion" style="display:none; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 15px; border-radius: 12px; margin-top: 15px; animation: fadeIn 0.3s ease;">
+                <p style="color:var(--text); margin:0 0 10px 0; display:flex; align-items:center; gap:8px;"><i class='bx bx-bulb' style="color:#10b981; font-size:1.2rem;"></i> <strong>Similar Doubt Solved!</strong></p>
+                <p style="color:var(--muted); font-size: 0.9rem; margin-top: 0;">"Arjun" asked a very similar question recently. Check out how it was resolved:</p>
+                <div style="display:flex; gap:10px; margin-top: 15px;">
+                    <button class="btn" style="background:#10b981; color:white; padding:8px 15px; border:none; border-radius:8px; font-weight:600;" onclick="alert('Opening video timestamp...')"><i class='bx bx-play-circle'></i> Watch Recording</button>
+                    <button class="btn" style="background:var(--accent); color:white; padding:8px 15px; border:none; border-radius:8px; font-weight:600;" onclick="alert('Starting chat with Arjun...')"><i class='bx bx-chat'></i> Ask Arjun</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">Earn +15 Points per solved doubt</span>
+                <button onclick="postQuestion()" style="background:#f59e0b; color:white; border:none; padding:8px 24px; border-radius:8px; cursor:pointer; font-weight:bold;">Post Question</button>
+            </div>
+        </div>
+
+        <div id="questions-feed">
+            <!-- Questions will be loaded here by JavaScript -->
+            <p style="color: var(--muted); text-align: center; padding: 20px;">Loading questions...</p>
+        </div>
+        
+        <hr style="border:none; border-top:1px solid var(--border); margin: 40px 0;">
+        
+        <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 25px; border-radius: 16px;">
+            <h2 style="margin-top:0; color:var(--text); display:flex; align-items:center; gap:10px;"><span style="font-size:1.8rem;">🚨</span> Need Urgent Help?</h2>
+            <p style="color:var(--muted); margin-bottom:20px;">Connect instantly with online teachers for a private 1-on-1 text chat session.</p>
+            <button class="btn" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('available-teachers-container').style.display='flex'">View Available Teachers</button>
+            
+            <div class="horizontal-scroll" id="available-teachers-container" style="margin-top: 20px; display:none;">
+                <p style="color: var(--muted); padding: 10px;">Scanning for available teachers...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside>
+        <div class="card" style="border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05);">
+            <h3 style="margin-top:0; color: #3b82f6; display:flex; align-items:center; gap:8px;"><i class='bx bxs-trophy' style="font-size:1.5rem;"></i> Top Solvers</h3>
+            <p style="font-size:0.85rem; color:#94a3b8; margin-bottom: 20px;">Ranked by StudySphere Points</p>
+            
+            <div id="leaderboard-container" style="display:flex; flex-direction:column; gap:12px;">
+                <p style="color:#94a3b8; font-size:0.9rem; text-align:center;">Loading rankings...</p>
+            </div>
+        </div>
+    </aside>
+
+  </div>
+
+    <!-- Private 1-on-1 Chat Modal -->
+    <div id="private-chat-modal" class="modal" style="z-index: 4000;">
+        <div class="modal-content" style="max-width: 1000px; width: 95%; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow:hidden; background:var(--bg-card);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); background:var(--bg);">
+                <h2 id="private-chat-title" style="margin:0; color:#10b981; display: flex; align-items: center; gap: 10px;"><i class='bx bx-video'></i> <span>1-on-1 Session</span></h2>
+                <button class="btn" style="background: #ef4444; color: white; padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer;" onclick="closePrivateChat()">End Session</button>
+            </div>
+            <div style="flex:1; display:flex; overflow:hidden;">
+                <!-- Simple Video Area -->
+                <div style="flex: 2; background: #0f172a; position: relative; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="text-align: center; animation: pulse-glow 3s infinite;">
+                        <video id="remote-teacher-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;"></video>
+                        <div id="teacher-connecting-text" style="position:absolute; color:var(--muted); font-size:1.1rem; text-shadow:0 0 5px rgba(0,0,0,0.5);">Connecting to teacher...</div>
+                    </div>
+                    <video id="student-local-video" autoplay muted playsinline style="position:absolute; bottom:20px; right:20px; width:180px; height:120px; background:#000; border-radius:12px; border:2px solid rgba(255,255,255,0.2); object-fit:cover; z-index:10;"></video>
+                    <div style="position:absolute; top:20px; left:20px; background:rgba(239,68,68,0.8); color:white; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:12px; letter-spacing:1px; box-shadow:0 2px 10px rgba(0,0,0,0.5);"><i class='bx bx-video-recording bx-flashing'></i> LIVE SESSION</div>
+                </div>
+                <!-- Chat Area -->
+                <div id="private-chat-container" style="flex:1; display:flex; flex-direction:column; background:var(--bg);">
+                    <div id="private-chat-msgs" style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px;"></div>
+                    <div style="padding:15px; border-top:1px solid var(--border); display:flex; gap:10px; background: var(--bg);">
+                        <input type="text" id="private-chat-input" placeholder="Type your message..." style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); background: transparent; color: var(--text); outline:none;">
+                        <button onclick="sendPrivateMsg(document.getElementById('private-chat-modal').dataset.roomId)" style="padding:10px 20px; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <nav class="menu" role="navigation" aria-label="Main Menu">
+    <a href="front.html" class="link"><span class="link-icon">dashboard</span><span class="link-title">Dashboard</span></a>
+    <a href="classes.html" class="link"><span class="link-icon">live_tv</span><span class="link-title">Classes</span></a>
+    <a href="social.html" class="link"><span class="link-icon">group</span><span class="link-title">Social</span></a>
+    <a href="stu-ai.html" class="link"><span class="link-icon">smart_toy</span><span class="link-title">STU AI</span></a>
+    <a href="settings.html" class="link"><span class="link-icon">settings</span><span class="link-title">Settings</span></a>
+  </nav>
+
+  <script>
+    const getApiBase = () => {
+        const hn = window.location.hostname;
+        const proto = window.location.protocol;
+        if (hn === 'localhost' || hn === '127.0.0.1') return window.location.pathname.startsWith('/practice/') ? `${proto}//${hn}/practice/` : `${proto}//${hn}/`;
+        if (window.location.port === '5500' || window.location.port === '5501') return 'http://localhost/practice/';
+        return '';
+    };
+    const API_BASE = getApiBase();
+
+    // Load Available Teachers
+    function loadAvailableTeachers() {
+        fetch(API_BASE + 'get_available_teachers.php', { credentials: 'include' })
+        .then(res => res.json())
+        .then(teachers => {
+            const container = document.getElementById('available-teachers-container');
+            if (teachers && teachers.length > 0) {
+                container.innerHTML = teachers.map(t => `
+                    <div class="course-card" style="min-width: 200px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.05);">
+                        <div class="avatar" style="width: 60px; height: 60px; font-size: 24px; border-radius: 50%; background: #ef4444; display: grid; place-items: center; color: white; font-weight: bold; margin-bottom: 10px;">
+                            ${t.username.charAt(0).toUpperCase()}
+                        </div>
+                        <h4 style="margin: 0 0 5px 0; color: var(--text);">${t.username}</h4>
+                        <p style="font-size: 0.8rem; color: #10b981; margin: 0 0 15px 0; font-weight: bold;">● Online</p>
+                        <button class="btn" style="background: #ef4444; width: 100%; padding: 10px; border-radius: 8px; font-weight:bold; color:white; border:none; cursor:pointer;" onclick="requestOneOnOne('${t.username}')">Request 1-on-1</button>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p style="color:var(--muted); text-align: center; width: 100%; padding: 20px; border: 1px dashed var(--border); border-radius: 12px;">No teachers are currently online. Check back later.</p>';
+            }
+        })
+        .catch(err => console.error('Failed to load teachers', err));
+    }
+    loadAvailableTeachers();
+
+    window.appendPrivateMsg = function(text, isSelf, senderName = 'You') {
+        const box = document.getElementById('private-chat-msgs');
+        if(!box) return;
+        const div = document.createElement('div');
+
+        div.style.cssText = `
+            background: ${isSelf ? '#3b82f6' : 'rgba(255,255,255,0.05)'};
+            ${isSelf ? '' : 'border: 1px solid rgba(255,255,255,0.1);'}
+            color: ${isSelf ? 'white' : 'var(--text)'};
+            padding: 12px 18px;
+            border-radius: 16px;
+            border-bottom-${isSelf ? 'right' : 'left'}-radius: 4px;
+            max-width: 80%;
+            margin-bottom: 8px;
+        `;
+        div.innerHTML = `<strong>${senderName}:</strong> ${text.replace(/\n/g, '<br>')}`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    window.requestOneOnOne = function(teacherUsername) {
+        fetch(API_BASE + 'api_notifications.php?action=send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                target: teacherUsername,
+                type: '1on1_request',
+                data: {}
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`🚨 Request sent to ${teacherUsername}. Waiting for response...`);
+            } else {
+                alert('Failed to send request. Server error.');
+            }
+        });
+    }
+
+    // Cross-Device Server Polling
+    setInterval(() => {
+        fetch(API_BASE + 'api_notifications.php?action=poll', {credentials: 'include'})
+        .then(res => res.json())
+        .then(notifs => {
+            if(!Array.isArray(notifs)) return;
+            notifs.forEach(n => {
+                if (n.type === '1on1_accepted') {
+                    const data = JSON.parse(n.data);
+                    alert(`✅ ${n.sender_user} has accepted your request! Joining room...`);
+                    openPrivateChat(n.sender_user, data.room, false);
+                }
+                if (n.type === '1on1_chat_msg') {
+                    const data = JSON.parse(n.data);
+                    const modal = document.getElementById('private-chat-modal');
+                    if (modal && modal.style.display === 'block' && data.room === modal.dataset.roomId) {
+                        appendPrivateMsg(data.text, false, n.sender_user);
+                    }
+                    }
+                    if (n.type === '1on1_end') {
+                        const data = JSON.parse(n.data);
+                        const modal = document.getElementById('student-private-chat-modal');
+                        if (modal && modal.style.display === 'block' && data.room === modal.dataset.roomId) {
+                            alert('The teacher has ended the 1-on-1 session.');
+                            closeStudentPrivateChat(false);
+                        }
+                }
+            });
+        }).catch(e => console.error(e));
+    }, 3000);
+
+    window.sendPrivateMsg = function(roomId, isTeacher) {
+        const input = document.getElementById('private-chat-input');
+        const text = input.value.trim();
+        if(!text) return;
+        appendPrivateMsg(text, true, 'You');
+        
+        const modal = document.getElementById('private-chat-modal');
+        const target = modal.dataset.peerName || 'Teacher';
+
+        fetch(API_BASE + 'api_notifications.php?action=send', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'include',
+            body: JSON.stringify({ target: target, type: '1on1_chat_msg', data: { room: roomId, text: text } })
+        });
+        
+        input.value = '';
+    }
+
+    window.openPrivateChat = function(peerName, roomId, isTeacher) {
+        const modal = document.getElementById('private-chat-modal');
+        const container = document.getElementById('private-chat-container');
+        document.getElementById('private-chat-title').innerHTML = `<i class='bx bx-video'></i> <span>1-on-1 with ${peerName}</span>`;
+        container.innerHTML = `
+            <div id="private-chat-msgs" style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px;">
+                <div style="color:var(--muted); text-align:center; font-size:0.85rem; padding: 10px; background: rgba(128,128,128,0.1); border-radius: 8px;">
+                    Secure 1-on-1 session started. You can now chat and talk.
+                </div>
+            </div>
+            <div style="padding:15px; border-top:1px solid var(--border); display:flex; gap:10px; background: var(--bg);">
+                <input type="text" id="private-chat-input" placeholder="Type your message..." style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); background: transparent; color: var(--text); outline:none;">
+                <button onclick="sendPrivateMsg('${roomId}', ${isTeacher})" style="padding:10px 20px; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Send</button>
+            </div>
+        `;
+
+        // Turn on local camera (dummy simple implementation)
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+                const localVid = document.getElementById('student-local-video');
+                if(localVid) localVid.srcObject = stream;
+            }).catch(err => {
+                console.log('Camera access denied or unavailable.');
+                if(document.getElementById('student-local-video')) document.getElementById('student-local-video').style.display = 'none';
+            });
+
+        modal.style.display = 'block';
+        modal.dataset.roomId = roomId;
+        modal.dataset.isTeacher = isTeacher;
+        modal.dataset.peerName = peerName;
+
+        document.getElementById('private-chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendPrivateMsg(roomId, isTeacher);
+        });
+    }
+
+    window.closePrivateChat = function() {
+        const modal = document.getElementById('private-chat-modal');
+        const container = document.getElementById('private-chat-container');
+        
+        // Notify teacher that student left
+        if (modal.dataset.peerName && modal.dataset.roomId) {
+            fetch(API_BASE + 'api_notifications.php?action=send', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'include',
+                body: JSON.stringify({ target: modal.dataset.peerName, type: '1on1_chat_msg', data: { room: modal.dataset.roomId, text: 'System: The student has left the chat session.' } })
+            });
+        }
+
+        // Turn off camera
+        const localVid = document.getElementById('student-local-video');
+        if (localVid && localVid.srcObject) {
+            localVid.srcObject.getTracks().forEach(track => track.stop());
+            localVid.srcObject = null;
+        }
+
+        container.innerHTML = '';
+        modal.style.display = 'none';
+    }
+
+    window.submitAnswer = function(btn) {
+        const answer = prompt("Type your answer to solve this doubt:");
+        if(answer && answer.trim() !== "") {
+            fetch(API_BASE + 'add_points.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({points: 15})
+            }).then(res=>res.json()).then(data => {
+                if(data.success) {
+                    btn.innerHTML = `<span class="material-symbols-rounded" style="font-size:18px; margin-right:5px;">check_circle</span> Solved! (+15 Pts)`;
+                    btn.style.color = "#10b981";
+                    btn.disabled = true;
+                    alert("Awesome! You earned 15 points. Keep it up!");
+                    loadLeaderboard(); 
+                } else {
+                    alert("Failed to add points. Please check if you are logged in.");
+                }
+            });
+        }
+    }
+
+    // Load Points Leaderboard
+    function loadLeaderboard() {
+        fetch(API_BASE + 'get_leaderboard.php', { credentials: 'include' })
+        .then(res => res.json())
+        .then(users => {
+        const container = document.getElementById('leaderboard-container');
+        if (users.length > 0) {
+            container.innerHTML = users.map((u, i) => {
+                let rankClass = i < 3 ? `rank-${i+1}` : '';
+                return `
+                    <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.02); padding:10px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); transition: 0.2s;">
+                        <div class="leaderboard-rank ${rankClass}">${i+1}</div>
+                        <div style="flex:1;">
+                            <div style="color:var(--text); font-weight:600; font-size:0.95rem;">${u.username}</div>
+                            <div style="color:#f59e0b; font-size:0.8rem; font-weight:bold;">${u.points} pts</div>
+                        </div>
+                        ${i === 0 ? '<i class="bx bxs-crown" style="color:#facc15; font-size:1.5rem;"></i>' : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = '<p style="color:#94a3b8; font-size:0.9rem; text-align:center;">No ranked students yet.</p>';
+        }
+    });
+    }
+    loadLeaderboard();
+
+    function escapeHtml(input) {
+        return String(input)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, color='#10b981') {
+        const toast = document.createElement('div');
+        toast.innerHTML = `✅ ${message}`;
+        toast.style.cssText = `position:fixed; bottom:20px; right:20px; background:${color}; color:white; padding:12px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:2000; animation: slideUp 0.3s; opacity:1; font-weight:500;`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = '0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    function createQuestionCard(q) {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.style.marginTop = '16px';
+        card.style.animation = 'fadeIn 0.4s';
+
+        const createdAt = q.created_at ? new Date(q.created_at).toLocaleString() : 'Just now';
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-weight:700; color:var(--text);">${escapeHtml(q.username || 'Student')}</div>
+                <div style="color:#94a3b8; font-size:0.82rem;">${escapeHtml(createdAt)}</div>
+            </div>
+            <p style="margin:8px 0 12px; color:var(--text); line-height:1.5;">${escapeHtml(q.question_text)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <button onclick="submitAnswer(this)" style="background:#057a55; color:white; border:none; border-radius:8px; padding:8px 12px; cursor:pointer;">✅ Solve & Earn (+15)</button>
+                <span style="color:#f59e0b; font-size:0.82rem; font-weight:700;">+15 Bounty</span>
+                <span style="color:#94a3b8; font-size:0.82rem;">0 comments • 0 answers</span>
+            </div>
+        `;
+
+        return card;
+    }
+
+    function renderQuestions(questions) {
+        const feed = document.getElementById('questions-feed');
+        if (!feed) return;
+
+        if (!Array.isArray(questions) || questions.length === 0) {
+            feed.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No questions yet. Be the first to ask!</p>';
+            return;
+        }
+
+        feed.innerHTML = '';
+        questions.forEach(q => feed.appendChild(createQuestionCard(q)));
+    }
+
+    function loadQuestions() {
+        fetch(API_BASE + 'get_questions.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    renderQuestions(data);
+                } else {
+                    console.error('Invalid questions payload', data);
+                    showToast('Unable to load doubts', '#dc2626');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Network error loading doubts', '#dc2626');
+            });
+    }
+
+    window.postQuestion = function () {
+        const input = document.getElementById('ask-question-input');
+        const createPostBox = input.closest('.create-post');
+        if (!input || !createPostBox) return;
+
+        const text = input.value.trim();
+        if (!text) {
+            alert('Please type your question first.');
+            return;
+        }
+
+        // Instant UI Preview (from snippet logic)
+        const newPost = document.createElement('div');
+        newPost.className = 'post-card';
+        newPost.style.animation = 'fadeIn 0.5s';
+        const username = localStorage.getItem('username') || 'Student';
+        const initial = username.charAt(0).toUpperCase();
+        newPost.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-weight:700; color:var(--text);">${initial} ${escapeHtml(username)}</div>
+                <div style="color:#94a3b8; font-size:0.82rem;">Just now</div>
+            </div>
+            <p style="margin:8px 0 12px; color:var(--text); line-height:1.5;">${escapeHtml(text)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <button onclick="submitAnswer(this)" style="background:#057a55; color:white; border:none; border-radius:8px; padding:8px 12px; cursor:pointer;">✅ Solve & Earn (+15)</button>
+                <span style="color:#f59e0b; font-size:0.82rem; font-weight:700;">+15 Bounty</span>
+                <span style="color:#94a3b8; font-size:0.82rem;">0 comments • 0 answers</span>
+            </div>
+        `;
+        createPostBox.parentNode.insertBefore(newPost, createPostBox.nextSibling);
+
+        // Server call
+        fetch(API_BASE + 'add_question.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ question_text: text })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    document.getElementById('smart-suggestion').style.display = 'none';
+                    showToast('Question posted!');
+                    loadLeaderboard();
+                    loadQuestions(); // Refresh full feed
+                } else {
+                    newPost.remove(); // Rollback preview if fail
+                    alert(data.message || 'Failed to post question.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                newPost.remove();
+                alert('Network error while posting question.');
+            });
+    };
+
+    // Smart Suggestion Logic
+    document.getElementById('ask-question-input').addEventListener('input', function(e) {
+        const val = e.target.value.toLowerCase();
+        const sug = document.getElementById('smart-suggestion');
+        if (val.length > 10 && (val.includes('react') || val.includes('props') || val.includes('state') || val.includes('redux') || val.includes('error'))) {
+            sug.style.display = 'block';
+        } else {
+            sug.style.display = 'none';
+        }
+    });
+
+    loadQuestions();
+  </script>
+</body>
+</html>

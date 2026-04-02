@@ -1,0 +1,505 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* --- GLOBAL RESET --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+}
+
+/* --- VARIABLES --- */
+:root{
+    --main-color: #3b82f6;
+    --second-color: #2563eb;
+    --shadow-color: rgba(59, 130, 246, 0.3);
+
+    --inputColor: #ffffff;
+    --beamColor: rgba(228,96,51,0.12);
+}
+
+/* --- BODY & BACKGROUND --- */
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 20px;
+}
+
+/* --- MAIN CONTAINER (Glassmorphism) --- */
+.container{
+    position: relative;
+    width: 100%;
+    max-width: 750px;
+    height: 450px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        max-width: 400px;
+        height: 600px; /* Fixed height for mobile to prevent layout jumps */
+        min-height: auto;
+    }
+
+    .container .form-box,
+    .info-content {
+        position: absolute !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 30px 20px !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+
+    .form-box.Login .animation,
+    .form-box.Register .animation,
+    .info-content.Login .animation,
+    .info-content.Register .animation {
+        transform: none !important;
+        opacity: 1 !important;
+        filter: blur(0px) !important;
+        transition-delay: 0s !important;
+    }
+
+    /* Hide Info Content on Mobile to save space */
+    .info-content {
+        display: none !important;
+    }
+
+    /* Default State: Show Login, Hide Register */
+    .form-box.Login { display: flex; opacity: 1; pointer-events: auto; z-index: 10; }
+    .form-box.Register { display: none; opacity: 0; pointer-events: none; }
+
+    /* Active State (Register Mode): Hide Login, Show Register */
+    .container.active .form-box.Login { display: none; opacity: 0; pointer-events: none; }
+    .container.active .form-box.Register { display: flex; opacity: 1; pointer-events: auto; z-index: 10; }
+
+    .container .curved-shape,
+    .container .curved-shape2 {
+        display: none;
+    }
+}
+
+/* --- FORM BOX LAYOUT --- */
+.container .form-box{
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+/* --- LOGIN FORM ANIMATIONS --- */
+.form-box.Login{
+    left: 0;
+    padding: 0 40px;
+}
+
+.form-box.Login .animation{
+    transform: translateX(0%);
+    transition: .7s;
+    opacity: 1;
+    transition-delay: calc(.1s * var(--S));
+}
+
+.container.active .form-box.Login .animation{
+    transform: translateX(-120%);
+    opacity: 0;
+    transition-delay: calc(.1s * var(--D));
+}
+
+/* --- REGISTER FORM ANIMATIONS --- */
+.form-box.Register{
+    /* display: none; */
+    right: 0;
+    padding: 0 60px;
+}
+
+.form-box.Register .animation{
+    transform: translateX(120%);
+    transition: .7s ease;
+    opacity: 0;
+    filter: blur(10px);
+    transition-delay: calc(.1s * var(--S));
+}
+
+.container.active .form-box.Register .animation{
+    transform: translateX(0%);
+    opacity: 1;
+    filter: blur(0px);
+    transition-delay: calc(.1s * var(--li));
+}
+
+.form-box h2{
+    font-size: 32px;
+    text-align: center;
+}
+
+/* --- INPUT FIELDS --- */
+.form-box .input-box{
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin-top: 25px;
+}
+
+.input-box input{
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+    padding: 0 45px 0 15px;
+    transition: .5s;
+}
+
+.input-box input:focus,
+.input-box input:valid{
+    border-color: #e46033;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.input-box label{
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #fff;
+    pointer-events: none;
+    transition: .5s;
+}
+
+.input-box input:focus ~ label,
+.input-box input:valid ~ label{
+    top: -10px;
+    left: 0;
+    font-size: 12px;
+    color: #e46033;
+}
+
+.input-box box-icon{
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    font-size: 18px;
+    transform: translateY(-50%);
+    color: #fff;
+}
+
+.input-box input:focus ~ box-icon,
+.input-box input:valid ~ box-icon{
+    color: #e46033;
+}
+
+/* --- BUTTONS --- */
+.btn{
+    position: relative;
+    width: 100%;
+    height: 45px;
+    background: transparent;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    overflow: hidden;
+    z-index: 10;    
+}
+
+.btn::before{
+    content: "";
+    position: absolute;
+    height: 300%;
+    width: 100%;
+    background: linear-gradient(135deg, #e46033, #f97316, #e46033);
+    top: -100%;
+    left: 0;
+    z-index: -1;
+    transition: .5s;
+}
+
+.btn:hover:before{
+    top: 0;
+}
+.btn:hover { box-shadow: 0 5px 15px rgba(228, 96, 51, 0.4); }
+
+.input-box select {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid #fff;
+    padding-right: 23px;
+    transition: .5s;
+    cursor: pointer;
+}
+.input-box select option {
+    background: #25252b;
+    color: #fff;
+}
+
+/* --- LINKS --- */
+.regi-link{
+    font-size: 14px;
+    text-align: center;
+    margin: 20px 0 10px;
+}
+
+.regi-link a{
+    text-decoration: none;
+    color: #e46033;
+    font-weight: 600;
+}
+
+.regi-link a:hover{
+    text-decoration: underline;
+}
+
+/* --- INFO CONTENT (Side Panel) --- */
+.info-content{
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+}
+
+.info-content.Login{
+    right: 0;
+    text-align: right;
+    padding: 0 40px 60px 150px;
+}
+
+.info-content.Login .animation{
+    transform: translateX(0);
+    transition: .7s ease;
+    transition-delay: calc(.1s * var(--S));
+    opacity: 1;
+    filter: blur(0px);
+}
+
+.container.active .info-content.Login .animation{
+    transform: translateX(120%);
+    opacity: 0;
+    filter: blur(10px);
+    transition-delay: calc(.1s * var(--D));
+}
+
+.info-content.Register{
+    /* display: none; */
+    left: 0;
+    text-align: left;
+    padding: 0 150px 60px 38px;
+    pointer-events: none;
+}
+
+.info-content.Register .animation{
+    transform: translateX(-120%);
+    transition: .7s ease;
+    opacity: 0;
+    filter: blur(10PX);
+    transition-delay: calc(.1s * var(--S));
+}
+
+.container.active .info-content.Register .animation{
+    transform: translateX(0%);
+    opacity: 1;
+    filter: blur(0);
+    transition-delay: calc(.1s * var(--li));
+}
+
+.info-content h2{
+    text-transform: uppercase;
+    font-size: 36px;
+    line-height: 1.3;
+}
+
+.info-content p{
+    font-size: 16px;
+}
+
+/* --- CURVED SHAPES (Background Design) --- */
+.container .curved-shape{
+    position: absolute;
+    right: 0;
+    top: -5px;
+    height: 600px;
+    width: 850px;
+    background: linear-gradient(45deg, #25252b, #e46033);
+    /*transform: rotate(10deg) skewY(40deg);*/
+    transform: rotate(10deg) skewY(40deg);
+    transform-origin: bottom right;
+    transition: 1.5s ease;
+    transition-delay: 1.6s;
+}
+
+.container.active .curved-shape{
+    transform: rotate(0deg) skewY(0deg);
+    transition-delay: .5s;
+}
+
+.container .curved-shape2{
+    position: absolute;
+    left: 250px;
+    top: 100%;
+    height: 700px;
+    width: 850px;
+    background: #25252b;
+    border-top: 3px solid #e46033;
+    transform: rotate(0deg) skewY(0deg);
+    transform-origin: bottom left;
+    transition: 1.5s ease;
+    transition-delay: .5s;
+}
+
+.container.active .curved-shape2{
+    transform: rotate(-11deg) skewY(-41deg);
+    transition-delay: 1.2s;
+}
+
+/* --- PASSWORD EYE ICON --- */
+[id=eyeball] {
+  --size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  border: none;
+  background-color: transparent;
+  transform: translateY(-50%);
+}
+[id=eyeball]:active {
+  transform: translateY(calc(-50% + 1px));
+}
+
+.eye {
+  width: var(--size);
+  height: var(--size);
+  border: 2px solid var(--inputColor);
+  border-radius: calc(var(--size) / 1.5) 0;
+  transform: rotate(45deg);
+}
+.eye:before, .eye:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  border-radius: 100%;
+}
+.eye:before {
+  width: 35%;
+  height: 35%;
+  background-color: var(--inputColor);
+}
+.eye:after {
+  width: 65%;
+  height: 65%;
+  border: 2px solid var(--inputColor);
+  border-radius: 100%;
+}
+
+/* --- FLASHLIGHT BEAM EFFECT --- */
+[id=beam] {
+  position: absolute;
+  top: 50%;
+  right: 1.75rem;
+  -webkit-clip-path: polygon(100% 50%, 100% 50%, 0 0, 0 100%);
+          clip-path: polygon(100% 50%, 100% 50%, 0 0, 0 100%);
+  width: 100vw;
+  height: 25vw;
+  z-index: 1;
+  mix-blend-mode: multiply;
+  transition: transform 200ms ease-out;
+  transform-origin: 100% 50%;
+  transform: translateY(-50%) rotate(var(--beamDegrees, 0));
+  pointer-events: none;
+}
+.show-password [id=beam] {
+  background: var(--beamColor);
+}
+
+/* Hide browser-native password reveal icons so only the custom eye button remains */
+/* IE / Edge (legacy) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+/* WebKit-based browsers (attempts to cover Chromium / Safari variants) */
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-password-toggle-button {
+    display: none !important;
+    -webkit-appearance: none;
+}
+
+/* Fallback: remove default appearance to reduce native controls */
+input[type="password"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* --- ANIMATION DELAYS (Data Attributes) --- */
+/* Login section - --D and --S variables */
+[data-animation-d="0"] { --D: 0; }
+[data-animation-d="1"] { --D: 1; }
+[data-animation-d="2"] { --D: 2; }
+[data-animation-d="2.5"] { --D: 2.5; }
+[data-animation-d="3"] { --D: 3; }
+[data-animation-d="4"] { --D: 4; }
+
+[data-animation-s="20"] { --S: 20; }
+[data-animation-s="21"] { --S: 21; }
+[data-animation-s="22"] { --S: 22; }
+[data-animation-s="23"] { --S: 23; }
+[data-animation-s="24"] { --S: 24; }
+[data-animation-s="25"] { --S: 25; }
+
+/* Register section - --li and --S variables */
+[data-animation-li="17"] { --li: 17; }
+[data-animation-li="18"] { --li: 18; }
+[data-animation-li="19"] { --li: 19; }
+[data-animation-li="20"] { --li: 20; }
+[data-animation-li="21"] { --li: 21; }
+
+[data-animation-s="0"] { --S: 0; }
+[data-animation-s="1"] { --S: 1; }
+[data-animation-s="2"] { --S: 2; }
+[data-animation-s="3"] { --S: 3; }
+[data-animation-s="4"] { --S: 4; }
+[data-animation-s="5"] { --S: 5; }

@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Classes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="classes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        /* Premier & Schedule Styles */
+        .btn-disabled {
+            background: rgba(255,255,255,0.1);
+            color: #aaa;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status-live { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .status-premier { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .status-scheduled { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+        .status-workshop { background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.4); }
+        
+        .countdown {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #fbbf24;
+            margin-left: 10px;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-bar input:focus {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Video Modal */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); backdrop-filter: blur(10px); animation: fadeIn 0.3s; overflow-y: auto; }
+        .modal-content { background: #1e293b; margin: 2% auto; padding: 25px; border: 1px solid rgba(255,255,255,0.1); width: 95%; max-width: 1400px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; animation: slideUp 0.3s; }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+        .close-modal:hover { color: white; }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #000;
+            border-radius: 12px;
+        }
+        /* Custom Learning Session Overlay */
+        .video-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; /* Start opaque black */
+            z-index: 50; /* Topmost initially */
+            display: flex; flex-direction: column; justify-content: space-between; padding: 20px;
+            transition: background 0.5s;
+        }
+        .session-badge { background: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; width: fit-content; }
+        .session-watermark { position: absolute; top: 20px; right: 20px; opacity: 0.5; font-weight: bold; letter-spacing: 1px; }
+
+        /* Interaction Blocker (Prevents clicking YouTube UI) */
+        .video-blocker {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20; /* Above iframe */
+            background: transparent;
+        }
+
+        /* Custom Controls Bar */
+        .custom-controls {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 20px 20px 15px 20px;
+            display: flex; flex-direction: column; gap: 5px;
+            z-index: 40; /* Above blocker */
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .video-container:hover .custom-controls { opacity: 1; }
+        
+        .controls-row { display: flex; align-items: center; gap: 15px; width: 100%; }
+        .timeline-row { display: flex; align-items: center; gap: 10px; width: 100%; font-size: 12px; font-family: monospace; color: #ddd; }
+
+        .ctrl-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; transition: 0.2s; }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+        .ctrl-btn span { font-size: 28px; }
+        
+        .seek-slider { flex: 1; height: 4px; -webkit-appearance: none; background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; cursor: pointer; }
+        .seek-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; cursor: pointer; transition: transform 0.2s; }
+        .seek-slider:hover::-webkit-slider-thumb { transform: scale(1.2); }
+
+        .volume-slider { width: 60px; height: 4px; -webkit-appearance: none; background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; cursor: pointer; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; border-radius: 50%; cursor: pointer; }
+        
+        .quality-select, .speed-select {
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 2px 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .quality-select option, .speed-select option { background: #000; }
+
+        /* Scale iframe to hide YouTube watermark/edges */
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scale(1.35); pointer-events: none; z-index: 1; }
+
+        /* Live Chat Styles */
+        .modal-content { max-width: 1200px; height: 80vh; display: flex; flex-direction: column; }
+
+        .live-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .live-tab { padding: 10px 15px; cursor: pointer; color: #94a3b8; position: relative; }
+        .live-tab.active { color: white; font-weight: bold; border-bottom: 2px solid var(--accent, #3b82f6); }
+        .live-tab.notify::after { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 2px solid #1e293b; }
+
+        #poll-container { display: none; padding: 15px; }
+        .poll-active h4 { margin: 0 0 15px 0; }
+        .poll-options { display: flex; flex-direction: column; gap: 10px; }
+        .poll-options button { width: 100%; text-align: left; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; color: white; cursor: pointer; transition: 0.2s; }
+        .poll-options button:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: #3b82f6; }
+        .poll-options button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        /* Fullscreen-like mode */
+        .modal.fullscreen-active { margin: 0; width: 100vw; height: 100vh; max-width: 100vw; border-radius: 0; }
+        .modal.fullscreen-active .modal-content { margin: 0; width: 100%; max-width: 100%; height: 100%; max-height: 100vh; border: none; border-radius: 0; display: flex; flex-direction: column; }
+        .modal.fullscreen-active .live-layout { flex-direction: column; flex-grow: 1; min-height: 0; }
+        .modal.fullscreen-active .video-wrapper { flex-grow: 1; min-height: 0; }
+        .modal.fullscreen-active .video-container { height: 100%; padding-bottom: 0; }
+        .modal.fullscreen-active .chat-wrapper { height: 280px; flex-shrink: 0; }
+
+        /* Theater Mode (Full Window, Side-by-Side) */
+        .modal.theater-active { margin: 0; width: 100vw; height: 100vh; max-width: none; border-radius: 0; top: 0; left: 0; }
+        .modal.theater-active .modal-content { margin: 0; width: 100%; max-width: 100%; height: 100%; border: none; border-radius: 0; padding: 0; }
+        .modal.theater-active .live-layout { margin-top: 0; gap: 0; height: 100%; }
+        .modal.theater-active .video-wrapper { flex: 1; }
+        .modal.theater-active .video-container { height: 100%; border-radius: 0; }
+        .modal.theater-active .chat-wrapper { width: 400px; flex: none; border-radius: 0; border-left: 1px solid rgba(255,255,255,0.1); background: #1e293b; height: 100%; }
+        .modal.theater-active .close-modal { z-index: 100; top: 15px; right: 20px; background: rgba(0,0,0,0.5); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .modal.theater-active #video-title { display: none; } /* Hide title in theater mode to save space */
+
+        /* --- GAMIFIED ROADMAP MODAL --- */
+        .roadmap-node {
+            display: flex; gap: 20px; padding: 20px; background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-bottom: 15px;
+            align-items: center; position: relative;
+        }
+        .roadmap-node.locked { opacity: 0.6; filter: grayscale(100%); pointer-events: none; }
+        .roadmap-icon {
+            width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
+            background: #1e293b; border: 2px solid #3b82f6; color: #3b82f6; font-size: 1.5rem;
+        }
+        .roadmap-node.completed .roadmap-icon { background: #10b981; border-color: #10b981; color: white; }
+        .roadmap-node.locked .roadmap-icon { border-color: #64748b; color: #64748b; }
+        
+        /* Connecting lines */
+        .roadmap-node:not(:last-child)::after {
+            content: ''; position: absolute; left: 45px; top: 70px; width: 2px; height: 30px;
+            background: #3b82f6; z-index: -1;
+        }
+        .roadmap-node.locked:not(:last-child)::after { background: #64748b; }
+
+        /* Mini Player Mode */
+        .modal.mini-active {
+            width: 400px; height: 225px;
+            top: auto; left: auto; bottom: 20px; right: 20px;
+            background: transparent; backdrop-filter: none;
+            overflow: visible; pointer-events: none;
+        }
+        .modal.mini-active .modal-content {
+            margin: 0; width: 100%; height: 100%; padding: 0;
+            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: auto;
+        }
+        .modal.mini-active .live-layout { margin: 0; height: 100%; }
+        .modal.mini-active .chat-wrapper { display: none; }
+        .modal.mini-active .video-wrapper { height: 100%; }
+        .modal.mini-active .video-container { border-radius: 12px; }
+        .modal.mini-active .close-modal {
+            top: -10px; right: -10px; background: #ef4444; color: white;
+            border-radius: 50%; width: 24px; height: 24px; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 60;
+        }
+        .modal.mini-active #video-title { display: none; }
+
+        .live-layout { display: flex; gap: 20px; margin-top: 20px; align-items: stretch; flex: 1; min-height: 0; }
+        .video-wrapper { flex: 3; display: flex; flex-direction: column; }
+        .video-container { flex: 1; background: black; }
+        
+        .chat-wrapper { flex: 1; min-width: 350px; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; }
+        .chat-header { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.05); border-radius: 12px 12px 0 0; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+        .chat-msg { color: #cbd5e1; }
+        .chat-msg strong { color: #60a5fa; }
+        .chat-input { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; }
+        .chat-input input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 6px; outline: none; }
+        .chat-input button#raise-hand-btn { background: rgba(255,255,255,0.1); color: #fbbf24; font-size: 1.2rem; padding: 8px 12px; }
+        .chat-input button { background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+
+        /* Notes Tab */
+        #notes-container { display: none; flex: 1; padding: 10px; }
+        #notes-area { width: 100%; height: 100%; background: rgba(0,0,0,0.2); border: none; color: #e2e8f0; padding: 10px; resize: none; outline: none; font-family: inherit; line-height: 1.5; }
+
+        /* Recorded Card Styles */
+        .card.recorded { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .card-thumbnail { width: 100%; height: 160px; object-fit: cover; transition: transform 0.3s; }
+        .card.recorded:hover .card-thumbnail { transform: scale(1.05); }
+        .card-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .card-body button { margin-top: auto; width: 100%; }
+
+        /* Pro Back Button */
+        .back-dashboard-btn {
+            position: absolute; top: 25px; left: 25px;
+            text-decoration: none; color: white;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px; border-radius: 30px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95rem; font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 8px;
+            z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .back-dashboard-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+        .back-dashboard-btn span { font-size: 1.2rem; transition: transform 0.3s; }
+        .back-dashboard-btn:hover span { transform: translateX(-3px); }
+        
+        /* Tooltip */
+        .back-dashboard-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 115%;
+            left: 0;
+            background: rgba(15, 23, 42, 0.9);
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-5px);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .back-dashboard-btn:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .live-layout { flex-direction: column; }
+            .chat-wrapper { height: 300px; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Bottom Navigation Bar */
+        .menu {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 30px;
+            border-radius: 50px;
+            display: flex;
+            gap: clamp(20px, 4vw, 40px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: auto;
+            min-width: 300px;
+            justify-content: center;
+        }
+        .link { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.75rem; transition: 0.3s; gap: 4px; }
+        .link:hover, .link.active { color: #3b82f6; transform: translateY(-2px); }
+        .link span.material-symbols-rounded { font-size: 24px; }
+        
+        /* Ensure content isn't hidden behind the menu */
+        body { padding-bottom: 100px; }
+
+        /* Horizontal Scroll for Enrolled/Workshops */
+        .horizontal-scroll {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+        .horizontal-scroll .card {
+            min-width: 320px;
+            flex: 0 0 auto;
+        }
+
+        /* Watch Later Button */
+        .watch-later-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.6); color: white; border: none;
+            border-radius: 50%; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+        .watch-later-btn:hover { background: #3b82f6; transform: scale(1.1); }
+        .card { position: relative; }
+        
+        /* Category Pills */
+        .category-filters {
+            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .category-filters::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text);
+            padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+            cursor: pointer; white-space: nowrap; transition: 0.3s;
+        }
+        .cat-btn.active, .cat-btn:hover {
+            background: #3b82f6; color: white; border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <h1>Learning Dashboard</h1>
+    <p>Live & Recorded Classes for Students</p>
+</header>
+
+<main class="wrapper">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999;"></canvas>
+
+    <!-- Admin Uploaded Courses (Dynamic) -->
+    <section id="available-courses-section">
+        <h2 class="section-title"> Courses </h2>
+        <div class="horizontal-scroll" id="available-courses-container">
+            <!-- Loading Placeholder -->
+            <div class="card recorded" style="min-width:300px; opacity:0.6; display:flex; align-items:center; justify-content:center; height:200px; background:rgba(255,255,255,0.02);">
+                <p style="color:#94a3b8;">Loading courses...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- My Enrolled Classes (New Section) -->
+    <section>
+        <h2 class="section-title">🎓 My Enrolled Classes</h2>
+        <div class="horizontal-scroll" id="my-enrolled-courses-container">
+            <!-- Static Examples (Will be appended/replaced by dynamic ones) -->
+            <div class="card live" style="border-left: 4px solid #10b981; display:none;">
+                <span class="status-badge" style="background:rgba(16,185,129,0.2); color:#10b981;">IN PROGRESS</span>
+                <h3>Full Stack Web Development</h3>
+                <p>Progress: 65% Completed</p>
+                <button onclick="openVideo('Full Stack Web Development', 'nu_pCVPKzTk', false)">Continue Watching</button>
+            </div>
+            <div class="card live" style="border-left: 4px solid #3b82f6;">
+                <span class="status-badge" style="background:rgba(59,130,246,0.2); color:#3b82f6;">ON TRACK</span>
+                <h3>Data Science with Python</h3>
+                <p>Progress: 40% Completed</p>
+                <button onclick="openVideo('Data Science with Python', 'LHBE6Q9XlzI', false)">Continue Watching</button>
+            </div>
+            <div class="card live" style="border-left: 4px solid #f59e0b;">
+                <span class="status-badge" style="background:rgba(245,158,11,0.2); color:#f59e0b;">PENDING QUIZ</span>
+                <h3>UI/UX Design Fundamentals</h3>
+                <p>Module 4: Typography</p>
+                <button onclick="openVideo('UI/UX Design Fundamentals', 'c9Wg6Cb_YlU', false)">Resume</button>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="section-title">📅 Class Schedule</h2>
+
+        <div class="grid" id="live-grid">
+            <!-- Loading Placeholder -->
+            <div class="card live" style="min-width:300px; opacity:0.6; display:flex; align-items:center; justify-content:center; height:150px; background:rgba(255,255,255,0.02);">
+                <p style="color:#94a3b8;">Loading schedule...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Watch Later Section -->
+    <section id="watch-later-section" style="display:none;">
+        <h2 class="section-title">📑 Watch Later List</h2>
+        <div class="horizontal-scroll" id="watch-later-container"></div>
+    </section>
+
+    <!-- Workshops & Bootcamps (New Section) -->
+    <!-- 4. Recorded Classes -->
+    <section>
+        <h2 class="section-title">🚀 Workshops & Bootcamps</h2>
+        <div class="horizontal-scroll">
+            <div class="card recorded">
+                <button class="watch-later-btn" onclick="addToWatchLater('JavaScript Algorithms Bootcamp', 'W6NZfCO5SIk', 'https://i.ytimg.com/vi/W6NZfCO5SIk/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/W6NZfCO5SIk/hqdefault.jpg" class="card-thumbnail" alt="JS Bootcamp" onerror="this.src='https://via.placeholder.com/320x180?text=JS+Bootcamp'">
+                <div class="card-body">
+                    <h3>JavaScript Algorithms Bootcamp</h3>
+                    <p>Duration: 6h 30m • Intensive</p>
+                    <button onclick="openVideo('JavaScript Algorithms Bootcamp', 'W6NZfCO5SIk', false)">Start Bootcamp</button>
+                </div>
+            </div>
+            <div class="card recorded">
+                <button class="watch-later-btn" onclick="addToWatchLater('Web3 & Blockchain Workshop', 'gyMwXuJrbJQ', 'https://i.ytimg.com/vi/gyMwXuJrbJQ/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/gyMwXuJrbJQ/hqdefault.jpg" class="card-thumbnail" alt="Web3" onerror="this.src='https://via.placeholder.com/320x180?text=Web3+Workshop'">
+                <div class="card-body">
+                    <h3>Web3 & Blockchain Workshop</h3>
+                    <p>Duration: 2h 15m • Workshop</p>
+                    <button onclick="openVideo('Web3 & Blockchain Workshop', 'gyMwXuJrbJQ', false)">Watch Workshop</button>
+                </div>
+            </div>
+            <div class="card recorded">
+                <button class="watch-later-btn" onclick="addToWatchLater('System Design Interview Prep', '714ytr88e0w', 'https://i.ytimg.com/vi/714ytr88e0w/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/714ytr88e0w/hqdefault.jpg" class="card-thumbnail" alt="System Design" onerror="this.src='https://via.placeholder.com/320x180?text=System+Design'">
+                <div class="card-body">
+                    <h3>System Design Interview Prep</h3>
+                    <p>Duration: 1h 45m • Masterclass</p>
+                    <button onclick="openVideo('System Design Interview Prep', '714ytr88e0w', false)">Watch Masterclass</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="section-title">🎥 Recorded Classes</h2>
+        
+        <div class="category-filters" id="video-categories">
+            <button class="cat-btn active" onclick="filterByCategory('All', this)">All</button>
+            <button class="cat-btn" onclick="filterByCategory('Web Dev', this)">Web Dev</button>
+            <button class="cat-btn" onclick="filterByCategory('Data Science', this)">Data Science</button>
+            <button class="cat-btn" onclick="filterByCategory('Design', this)">Design</button>
+            <button class="cat-btn" onclick="filterByCategory('Database', this)">Database</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search topics (e.g., React, Database)..." onkeyup="filterClasses()">
+        </div>
+
+        <div class="grid">
+            <div class="card recorded" data-category="Database">
+                <button class="watch-later-btn" onclick="addToWatchLater('DBMS – Normalization', 'ZF555j8_X08', 'https://i.ytimg.com/vi/ZF555j8_X08/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/ZF555j8_X08/hqdefault.jpg" class="card-thumbnail" alt="DBMS" onerror="this.src='https://via.placeholder.com/320x180?text=DBMS'">
+                <div class="card-body">
+                    <h3>DBMS – Normalization</h3>
+                    <p>Duration: 45 mins</p>
+                    <button onclick="openVideo('DBMS – Normalization', 'ZF555j8_X08', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Computer Networks – TCP/IP', 'PpsEaqJV_A0', 'https://i.ytimg.com/vi/PpsEaqJV_A0/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/PpsEaqJV_A0/hqdefault.jpg" class="card-thumbnail" alt="Networks" onerror="this.src='https://via.placeholder.com/320x180?text=Networks'">
+                <div class="card-body">
+                    <h3>Computer Networks – TCP/IP</h3>
+                    <p>Duration: 50 mins</p>
+                    <button onclick="openVideo('Computer Networks – TCP/IP', 'PpsEaqJV_A0', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Web Development – React Hooks', 'dpw9EHDh2bM', 'https://i.ytimg.com/vi/dpw9EHDh2bM/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/dpw9EHDh2bM/hqdefault.jpg" class="card-thumbnail" alt="React" onerror="this.src='https://via.placeholder.com/320x180?text=React'">
+                <div class="card-body">
+                    <h3>Web Development – React Hooks</h3>
+                    <p>Duration: 1h 15 mins</p>
+                    <button onclick="openVideo('Web Development – React Hooks', 'dpw9EHDh2bM', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Data Science">
+                <button class="watch-later-btn" onclick="addToWatchLater('Machine Learning – Neural Networks', 'aircAruvnKk', 'https://i.ytimg.com/vi/aircAruvnKk/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/aircAruvnKk/hqdefault.jpg" class="card-thumbnail" alt="ML" onerror="this.src='https://via.placeholder.com/320x180?text=Machine+Learning'">
+                <div class="card-body">
+                    <h3>Machine Learning – Neural Networks</h3>
+                    <p>Duration: 2h 05 mins</p>
+                    <button onclick="openVideo('Machine Learning – Neural Networks', 'aircAruvnKk', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Cyber Security – Ethical Hacking', 'inWWhr5tnEA', 'https://i.ytimg.com/vi/inWWhr5tnEA/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/inWWhr5tnEA/hqdefault.jpg" class="card-thumbnail" alt="Cyber Security" onerror="this.src='https://via.placeholder.com/320x180?text=Cyber+Security'">
+                <div class="card-body">
+                    <h3>Cyber Security – Ethical Hacking</h3>
+                    <p>Duration: 55 mins</p>
+                    <button onclick="openVideo('Cyber Security – Ethical Hacking', 'inWWhr5tnEA', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('Graphic Design Masterclass', 'YqQx75OPRa0', 'https://i.ytimg.com/vi/YqQx75OPRa0/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/YqQx75OPRa0/hqdefault.jpg" class="card-thumbnail" alt="Graphic Design" onerror="this.src='https://via.placeholder.com/320x180?text=Graphic+Design'">
+                <div class="card-body">
+                    <h3>Graphic Design Masterclass</h3>
+                    <p>Duration: 3h 10 mins</p>
+                    <button onclick="openVideo('Graphic Design Masterclass', 'YqQx75OPRa0', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('Blender 3D - Beginner to Pro', 'nIoZHCAofAc', 'https://i.ytimg.com/vi/nIoZHCAofAc/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/nIoZHCAofAc/hqdefault.jpg" class="card-thumbnail" alt="Blender" onerror="this.src='https://via.placeholder.com/320x180?text=Blender'">
+                <div class="card-body">
+                    <h3>Blender 3D - Beginner to Pro</h3>
+                    <p>Duration: 4h 20 mins</p>
+                    <button onclick="openVideo('Blender 3D - Beginner to Pro', 'nIoZHCAofAc', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Data Science">
+                <button class="watch-later-btn" onclick="addToWatchLater('Python for Data Science', 'LHBE6Q9XlzI', 'https://i.ytimg.com/vi/LHBE6Q9XlzI/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/LHBE6Q9XlzI/hqdefault.jpg" class="card-thumbnail" alt="Python" onerror="this.src='https://via.placeholder.com/320x180?text=Python'">
+                <div class="card-body">
+                    <h3>Python for Data Science</h3>
+                    <p>Duration: 1h 45 mins</p>
+                    <button onclick="openVideo('Python for Data Science', 'LHBE6Q9XlzI', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('UI/UX Design Fundamentals', 'c9Wg6Cb_YlU', 'https://i.ytimg.com/vi/c9Wg6Cb_YlU/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/c9Wg6Cb_YlU/hqdefault.jpg" class="card-thumbnail" alt="UI/UX" onerror="this.src='https://via.placeholder.com/320x180?text=UI/UX'">
+                <div class="card-body">
+                    <h3>UI/UX Design Fundamentals</h3>
+                    <p>Duration: 55 mins</p>
+                    <button onclick="openVideo('UI/UX Design Fundamentals', 'c9Wg6Cb_YlU', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Introduction to Cloud Computing', 'M988_fsOSWo', 'https://i.ytimg.com/vi/M988_fsOSWo/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/M988_fsOSWo/hqdefault.jpg" class="card-thumbnail" alt="Cloud" onerror="this.src='https://via.placeholder.com/320x180?text=Cloud'">
+                <div class="card-body">
+                    <h3>Introduction to Cloud Computing</h3>
+                    <p>Duration: 1h 10 mins</p>
+                    <button onclick="openVideo('Introduction to Cloud Computing', 'M988_fsOSWo', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <!-- Added More Recorded Classes -->
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Flutter for Beginners', 'x0uinJvhNxI', 'https://i.ytimg.com/vi/x0uinJvhNxI/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/x0uinJvhNxI/hqdefault.jpg" class="card-thumbnail" alt="Flutter" onerror="this.src='https://via.placeholder.com/320x180?text=Flutter'">
+                <div class="card-body">
+                    <h3>Flutter for Beginners</h3>
+                    <p>Duration: 2h 30 mins</p>
+                    <button onclick="openVideo('Flutter for Beginners', 'x0uinJvhNxI', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Rust Programming Essentials', 'MsocPEZqDDw', 'https://i.ytimg.com/vi/MsocPEZqDDw/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/MsocPEZqDDw/hqdefault.jpg" class="card-thumbnail" alt="Rust" onerror="this.src='https://via.placeholder.com/320x180?text=Rust'">
+                <div class="card-body">
+                    <h3>Rust Programming Essentials</h3>
+                    <p>Duration: 1h 50 mins</p>
+                    <button onclick="openVideo('Rust Programming Essentials', 'MsocPEZqDDw', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Go Lang Crash Course', 'YS4e4q9oBaU', 'https://i.ytimg.com/vi/YS4e4q9oBaU/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/YS4e4q9oBaU/hqdefault.jpg" class="card-thumbnail" alt="Go Lang" onerror="this.src='https://via.placeholder.com/320x180?text=Go+Lang'">
+                <div class="card-body">
+                    <h3>Go Lang Crash Course</h3>
+                    <p>Duration: 1h 20 mins</p>
+                    <button onclick="openVideo('Go Lang Crash Course', 'YS4e4q9oBaU', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('AWS Certified Cloud Practitioner', '3hLmDS179YE', 'https://i.ytimg.com/vi/3hLmDS179YE/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/3hLmDS179YE/hqdefault.jpg" class="card-thumbnail" alt="AWS" onerror="this.src='https://via.placeholder.com/320x180?text=AWS'">
+                <div class="card-body">
+                    <h3>AWS Certified Cloud Practitioner</h3>
+                    <p>Duration: 4h 00 mins</p>
+                    <button onclick="openVideo('AWS Certified Cloud Practitioner', '3hLmDS179YE', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Unity Game Development', 'XtQMytORBmM', 'https://i.ytimg.com/vi/XtQMytORBmM/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/XtQMytORBmM/hqdefault.jpg" class="card-thumbnail" alt="Unity" onerror="this.src='https://via.placeholder.com/320x180?text=Unity'">
+                <div class="card-body">
+                    <h3>Unity Game Development</h3>
+                    <p>Duration: 3h 15 mins</p>
+                    <button onclick="openVideo('Unity Game Development', 'XtQMytORBmM', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('Digital Marketing 101', 'bJzb-RuUcMU', 'https://i.ytimg.com/vi/bJzb-RuUcMU/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/bJzb-RuUcMU/hqdefault.jpg" class="card-thumbnail" alt="Digital Marketing" onerror="this.src='https://via.placeholder.com/320x180?text=Digital+Marketing'">
+                <div class="card-body">
+                    <h3>Digital Marketing 101</h3>
+                    <p>Duration: 1h 05 mins</p>
+                    <button onclick="openVideo('Digital Marketing 101', 'bJzb-RuUcMU', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <!-- Even More Classes -->
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('C++ Programming', 'vLnPwxZdW4Y', 'https://i.ytimg.com/vi/vLnPwxZdW4Y/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/vLnPwxZdW4Y/hqdefault.jpg" class="card-thumbnail" alt="C++" onerror="this.src='https://via.placeholder.com/320x180?text=C++'">
+                <div class="card-body">
+                    <h3>C++ Programming Course</h3>
+                    <p>Duration: 4h 00 mins</p>
+                    <button onclick="openVideo('C++ Programming Course', 'vLnPwxZdW4Y', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Java for Beginners', 'eIrMbAQSU34', 'https://i.ytimg.com/vi/eIrMbAQSU34/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/eIrMbAQSU34/hqdefault.jpg" class="card-thumbnail" alt="Java" onerror="this.src='https://via.placeholder.com/320x180?text=Java'">
+                <div class="card-body">
+                    <h3>Java for Beginners</h3>
+                    <p>Duration: 3h 45 mins</p>
+                    <button onclick="openVideo('Java for Beginners', 'eIrMbAQSU34', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Database">
+                <button class="watch-later-btn" onclick="addToWatchLater('SQL Database Tutorial', 'HXV3zeQKqGY', 'https://i.ytimg.com/vi/HXV3zeQKqGY/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/HXV3zeQKqGY/hqdefault.jpg" class="card-thumbnail" alt="SQL" onerror="this.src='https://via.placeholder.com/320x180?text=SQL'">
+                <div class="card-body">
+                    <h3>SQL Database Tutorial</h3>
+                    <p>Duration: 4h 20 mins</p>
+                    <button onclick="openVideo('SQL Database Tutorial', 'HXV3zeQKqGY', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <!-- Even More Classes -->
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Advanced Git Tutorial', 'qsTthdMM6yI', 'https://i.ytimg.com/vi/qsTthdMM6yI/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/qsTthdMM6yI/hqdefault.jpg" class="card-thumbnail" alt="Git" onerror="this.src='https://via.placeholder.com/320x180?text=Git'">
+                <div class="card-body">
+                    <h3>Advanced Git Tutorial</h3>
+                    <p>Duration: 1h 30 mins</p>
+                    <button onclick="openVideo('Advanced Git Tutorial', 'qsTthdMM6yI', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Docker for Beginners', '3c-iBn73dDE', 'https://i.ytimg.com/vi/3c-iBn73dDE/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/3c-iBn73dDE/hqdefault.jpg" class="card-thumbnail" alt="Docker" onerror="this.src='https://via.placeholder.com/320x180?text=Docker'">
+                <div class="card-body">
+                    <h3>Docker for Beginners</h3>
+                    <p>Duration: 2h 10 mins</p>
+                    <button onclick="openVideo('Docker for Beginners', '3c-iBn73dDE', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('Figma UI Design', '5Iank4A4I8w', 'https://i.ytimg.com/vi/5Iank4A4I8w/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/5Iank4A4I8w/hqdefault.jpg" class="card-thumbnail" alt="Figma" onerror="this.src='https://via.placeholder.com/320x180?text=Figma'">
+                <div class="card-body">
+                    <h3>Figma UI Design Tutorial</h3>
+                    <p>Duration: 1h 55 mins</p>
+                    <button onclick="openVideo('Figma UI Design Tutorial', '5Iank4A4I8w', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <!-- More Classes Added -->
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Node.js Crash Course', 'fBNz5xF-Kx4', 'https://i.ytimg.com/vi/fBNz5xF-Kx4/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/fBNz5xF-Kx4/hqdefault.jpg" class="card-thumbnail" alt="Node.js" onerror="this.src='https://via.placeholder.com/320x180?text=Node.js'">
+                <div class="card-body">
+                    <h3>Node.js Crash Course</h3>
+                    <p>Duration: 1h 40 mins</p>
+                    <button onclick="openVideo('Node.js Crash Course', 'fBNz5xF-Kx4', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('TypeScript for Beginners', 'BwuLxPH8IDs', 'https://i.ytimg.com/vi/BwuLxPH8IDs/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/BwuLxPH8IDs/hqdefault.jpg" class="card-thumbnail" alt="TypeScript" onerror="this.src='https://via.placeholder.com/320x180?text=TypeScript'">
+                <div class="card-body">
+                    <h3>TypeScript for Beginners</h3>
+                    <p>Duration: 1h 10 mins</p>
+                    <button onclick="openVideo('TypeScript for Beginners', 'BwuLxPH8IDs', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Database">
+                <button class="watch-later-btn" onclick="addToWatchLater('MongoDB Tutorial', '7CqJlxBYj4M', 'https://i.ytimg.com/vi/7CqJlxBYj4M/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/7CqJlxBYj4M/hqdefault.jpg" class="card-thumbnail" alt="MongoDB" onerror="this.src='https://via.placeholder.com/320x180?text=MongoDB'">
+                <div class="card-body">
+                    <h3>MongoDB Tutorial</h3>
+                    <p>Duration: 1h 25 mins</p>
+                    <button onclick="openVideo('MongoDB Tutorial', '7CqJlxBYj4M', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Vue.js 3 Course', 'FXpIoQ_rT_c', 'https://i.ytimg.com/vi/FXpIoQ_rT_c/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/FXpIoQ_rT_c/hqdefault.jpg" class="card-thumbnail" alt="Vue.js" onerror="this.src='https://via.placeholder.com/320x180?text=Vue.js'">
+                <div class="card-body">
+                    <h3>Vue.js 3 Full Course</h3>
+                    <p>Duration: 2h 50 mins</p>
+                    <button onclick="openVideo('Vue.js 3 Full Course', 'FXpIoQ_rT_c', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Design">
+                <button class="watch-later-btn" onclick="addToWatchLater('Tailwind CSS', 'ft30zcMlFao', 'https://i.ytimg.com/vi/ft30zcMlFao/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/ft30zcMlFao/hqdefault.jpg" class="card-thumbnail" alt="Tailwind" onerror="this.src='https://via.placeholder.com/320x180?text=Tailwind'">
+                <div class="card-body">
+                    <h3>Tailwind CSS Crash Course</h3>
+                    <p>Duration: 1h 05 mins</p>
+                    <button onclick="openVideo('Tailwind CSS Crash Course', 'ft30zcMlFao', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Next.js 13', 'ZVnjOPwW4ZA', 'https://i.ytimg.com/vi/ZVnjOPwW4ZA/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/ZVnjOPwW4ZA/hqdefault.jpg" class="card-thumbnail" alt="Next.js" onerror="this.src='https://via.placeholder.com/320x180?text=Next.js'">
+                <div class="card-body">
+                    <h3>Next.js 13 Full Course</h3>
+                    <p>Duration: 3h 15 mins</p>
+                    <button onclick="openVideo('Next.js 13 Full Course', 'ZVnjOPwW4ZA', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <!-- New Recorded Classes -->
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Svelte.js Crash Course', '3TVy6GdtNuQ', 'https://i.ytimg.com/vi/3TVy6GdtNuQ/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/3TVy6GdtNuQ/hqdefault.jpg" class="card-thumbnail" alt="Svelte" onerror="this.src='https://via.placeholder.com/320x180?text=Svelte'">
+                <div class="card-body">
+                    <h3>Svelte.js Crash Course</h3>
+                    <p>Duration: 1h 15 mins</p>
+                    <button onclick="openVideo('Svelte.js Crash Course', '3TVy6GdtNuQ', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Database">
+                <button class="watch-later-btn" onclick="addToWatchLater('PostgreSQL Tutorial', 'qw--VYLpxG4', 'https://i.ytimg.com/vi/qw--VYLpxG4/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/qw--VYLpxG4/hqdefault.jpg" class="card-thumbnail" alt="PostgreSQL" onerror="this.src='https://via.placeholder.com/320x180?text=PostgreSQL'">
+                <div class="card-body">
+                    <h3>PostgreSQL for Beginners</h3>
+                    <p>Duration: 2h 45 mins</p>
+                    <button onclick="openVideo('PostgreSQL for Beginners', 'qw--VYLpxG4', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Database">
+                <button class="watch-later-btn" onclick="addToWatchLater('Redis Crash Course', 'jgpVdJB2sKQ', 'https://i.ytimg.com/vi/jgpVdJB2sKQ/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/jgpVdJB2sKQ/hqdefault.jpg" class="card-thumbnail" alt="Redis" onerror="this.src='https://via.placeholder.com/320x180?text=Redis'">
+                <div class="card-body">
+                    <h3>Redis Crash Course</h3>
+                    <p>Duration: 45 mins</p>
+                    <button onclick="openVideo('Redis Crash Course', 'jgpVdJB2sKQ', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('GraphQL Full Course', 'ed8SzALpx1Q', 'https://i.ytimg.com/vi/ed8SzALpx1Q/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/ed8SzALpx1Q/hqdefault.jpg" class="card-thumbnail" alt="GraphQL" onerror="this.src='https://via.placeholder.com/320x180?text=GraphQL'">
+                <div class="card-body">
+                    <h3>GraphQL Full Course</h3>
+                    <p>Duration: 4h 10 mins</p>
+                    <button onclick="openVideo('GraphQL Full Course', 'ed8SzALpx1Q', false)">Watch Recording</button>
+                </div>
+            </div>
+
+            <div class="card recorded" data-category="Web Dev">
+                <button class="watch-later-btn" onclick="addToWatchLater('Three.js 3D Web', 'Q7AOvWpIVHU', 'https://i.ytimg.com/vi/Q7AOvWpIVHU/hqdefault.jpg')" title="Watch Later"><span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span></button>
+                <img src="https://i.ytimg.com/vi/Q7AOvWpIVHU/hqdefault.jpg" class="card-thumbnail" alt="Three.js" onerror="this.src='https://via.placeholder.com/320x180?text=Three.js'">
+                <div class="card-body">
+                    <h3>Three.js 3D Web Dev</h3>
+                    <p>Duration: 1h 50 mins</p>
+                    <button onclick="openVideo('Three.js 3D Web Dev', 'Q7AOvWpIVHU', false)">Watch Recording</button>
+                </div>
+            </div>
+    </div>
+    </section>
+
+    <!-- Watch Later (Bottom) -->
+    <section id="watch-later-section" style="display:none;">
+        <h2 class="section-title">📑 Watch Later List</h2>
+        <div class="horizontal-scroll" id="watch-later-container"></div>
+    </section>
+
+</main>
+
+<nav class="menu" role="navigation" aria-label="Main Menu">
+    <a href="front.html" class="link"><span class="material-symbols-rounded">dashboard</span><span class="link-title">Dashboard</span></a>
+    <a href="#" class="link active"><span class="material-symbols-rounded">live_tv</span><span class="link-title">Classes</span></a>
+    <a href="social.html" class="link"><span class="material-symbols-rounded">group</span><span class="link-title">Social</span></a>
+    <a href="stu-ai.html" class="link"><span class="material-symbols-rounded">smart_toy</span><span class="link-title">STU AI</span></a>
+    <a href="settings.html" class="link"><span class="material-symbols-rounded">settings</span><span class="link-title">Settings</span></a>
+</nav>
+
+<!-- Course Details Modal -->
+<div id="course-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px; height: auto;">
+        <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
+        <div style="padding: 20px;">
+            <h2 id="detail-course-name" style="color: white; margin-top: 0; margin-bottom: 15px;">Course Name</h2>
+            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 20px;">
+                    Master this subject with our comprehensive curriculum. This course includes video lectures, practical assignments, and a certificate of completion upon finishing.
+                </p>
+                <div style="font-size: 1.4rem; font-weight: bold; color: #3b82f6; display: flex; align-items: center; gap: 10px;">
+                    Price: <span id="detail-course-price">₹0.00</span>
+                    <span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal; text-decoration: line-through;">₹5000</span>
+                    <span style="font-size: 0.8rem; background: #10b981; color: white; padding: 2px 8px; border-radius: 4px;">Limited Offer</span>
+                </div>
+            </div>
+            <input type="hidden" id="detail-course-id">
+            <button onclick="proceedToPaymentFromDetails()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s;">Enroll Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- Gamified Course Roadmap Modal -->
+<div id="roadmap-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-modal" onclick="document.getElementById('roadmap-modal').style.display='none'">&times;</span>
+        <h2 id="roadmap-course-title" style="margin-top:0; color:white;">Course Journey</h2>
+        <p style="color: #94a3b8; margin-bottom: 25px;">Complete the video and pass the quiz to unlock the next level!</p>
+        
+        <div id="roadmap-container">
+            <div class="roadmap-node" id="node-mod1" style="border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);">
+                <div class="roadmap-icon" style="border-color: #f59e0b; color: #f59e0b;"><i class='bx bx-play'></i></div>
+                <div style="flex:1;">
+                        <h3 style="margin: 0 0 5px 0; color: white;">Module 1: Video Lecture</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: #f59e0b;">Learn the Core Concepts</p>
+                </div>
+                    <button class="btn" style="background: #f59e0b; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer; font-weight:bold;" onclick="startDemoVideo('Module 1', 'nu_pCVPKzTk', 0)"><i class='bx bx-play'></i> Watch Video</button>
+                    <button class="btn" style="background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer; font-weight:bold; margin-left: 10px;" onclick="window.location.href='Learning Zone — Notes · Quiz · Progress.html'"><i class='bx bx-book-open'></i> Read Notes</button>
+            </div>
+
+            <div class="roadmap-node locked" id="node-mod2">
+                    <div class="roadmap-icon"><i class='bx bx-task'></i></div>
+                <div style="flex:1;">
+                        <h3 style="margin: 0 0 5px 0; color: #94a3b8;">Module 2: Interactive Lab</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Locked - Complete Video to unlock Lab</p>
+                </div>
+                <button class="btn" style="background: transparent; color: #64748b; border: 1px solid #64748b; padding: 8px 15px; border-radius: 8px; cursor:not-allowed;">Locked</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px; height: auto;">
+        <span class="close-modal" onclick="closePaymentModal()">&times;</span>
+        
+        <div id="payment-form-step">
+            <h2 style="margin-top:0; color:white;">Confirm Enrollment</h2>
+            <div style="padding: 20px; text-align: center;">
+                <p style="color: #cbd5e1;">You are about to enroll in:</p>
+                <h3 id="pay-course-name" style="color: #3b82f6; margin: 10px 0;">Course Name</h3>
+                <p style="font-size: 1.5rem; font-weight: bold; color: white; margin: 20px 0;">Total: <span id="pay-amount">₹0.00</span></p>
+                <input type="hidden" id="pay-course-id">
+                
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #94a3b8;">Select Payment Method:</p>
+                    <label style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                        <input type="radio" name="payment-method" value="upi" checked>
+                        <span class="material-symbols-rounded">account_balance_wallet</span> UPI (GPay/PhonePe)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="payment-method" value="card">
+                        <span class="material-symbols-rounded">credit_card</span> Credit/Debit Card
+                    </label>
+                </div>
+
+                <button id="confirm-pay-btn" onclick="processEnrollment()" style="width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Confirm Payment</button>
+            </div>
+        </div>
+
+        <div id="payment-processing-step" style="display: none; padding: 40px 20px; text-align: center;">
+            <div class="spinner"></div>
+            <p style="color: #cbd5e1; margin-top: 20px;">Processing secure payment...</p>
+        </div>
+
+        <div id="payment-success-step" style="display: none; padding: 40px 20px; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; animation: slideUp 0.5s;">
+                <span class="material-symbols-rounded" style="font-size: 40px; color: white;">check</span>
+            </div>
+            <h3 style="color: white;">Enrollment Successful!</h3>
+            <p style="color: #94a3b8;">This course is now in your "My Enrolled Classes" section.</p>
+            <button onclick="finishEnrollmentFlow()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px;">Continue Learning</button>
+        </div>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div id="video-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeVideo()">&times;</span>
+        <h2 id="video-title" style="margin-top:0; color:white;">Class Title</h2>
+        
+        <div class="live-layout">
+            <div class="video-wrapper">
+                <div class="video-container">
+                    <div class="video-overlay">
+                    </div>
+                    <div class="video-blocker"></div>
+                    <div id="jitsi-container" style="display:none; width:100%; height:100%; position: absolute; top:0; left:0; z-index: 30; background:black;">
+                        <video id="student-live-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                        <div id="student-live-status" style="position:absolute; top:20px; left:20px; color:white; background:rgba(0,0,0,0.7); padding:10px; border-radius:8px; z-index:40; font-weight:bold;">Connecting to Teacher...</div>
+                    </div>
+                    <div id="yt-player"></div>
+                    <video id="local-player" playsinline style="display:none; width:100%; height:100%; object-fit:contain; z-index: 10; position:relative; background: black;"></video>
+                    
+                    <!-- Custom Controls -->
+                    <div class="custom-controls">
+                        <div class="timeline-row">
+                            <span id="current-time">0:00</span>
+                            <input type="range" class="seek-slider" id="seek-bar" min="0" max="100" value="0" oninput="handleSeek(this.value)" onmousedown="isDragging = true" onmouseup="isDragging = false" ontouchstart="isDragging = true" ontouchend="isDragging = false">
+                            <span id="duration-time">0:00</span>
+                        </div>
+                        <div class="controls-row">
+                            <button class="ctrl-btn" onclick="skip(-10)" title="Rewind 10s"><span class="material-symbols-rounded">replay_10</span></button>
+                            <button class="ctrl-btn" id="play-pause-btn" onclick="togglePlay()"><span class="material-symbols-rounded">pause</span></button>
+                            <button class="ctrl-btn" onclick="skip(10)" title="Forward 10s"><span class="material-symbols-rounded">forward_10</span></button>
+                            
+                            <button class="ctrl-btn" onclick="toggleMute()"><span class="material-symbols-rounded" id="mute-icon">volume_up</span></button>
+                            <input type="range" class="volume-slider" min="0" max="100" value="100" oninput="setVolume(this.value)">
+                            
+                            <div style="flex:1"></div>
+                            <select class="speed-select" onchange="changeSpeed(this.value)" title="Playback Speed">
+                                <option value="0.5">0.5x</option>
+                                <option value="1" selected>1x</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2x</option>
+                            </select>
+                            <select class="quality-select" onchange="changeQuality(this.value)" title="Quality">
+                                <option value="default">Auto</option>
+                                <option value="highres">4K</option>
+                                <option value="hd1080">1080p</option>
+                                <option value="hd720">720p</option>
+                                <option value="large">480p</option>
+                                <option value="medium">360p</option>
+                                <option value="small">240p</option>
+                            </select>
+                            <button class="ctrl-btn" onclick="toggleMiniPlayer()" title="Mini Player"><span class="material-symbols-rounded">picture_in_picture_alt</span></button>
+                            <button class="ctrl-btn" onclick="toggleTheater()" title="Theater Mode"><span class="material-symbols-rounded">rectangle</span></button>
+                            <button class="ctrl-btn" onclick="toggleFullscreen()"><span class="material-symbols-rounded">fullscreen</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-wrapper">
+                <div class="live-tabs">
+                    <div class="live-tab active" data-tab="chat" onclick="switchLiveTab('chat')">Live Chat</div>
+                    <div class="live-tab" data-tab="polls" onclick="switchLiveTab('polls')">Polls</div>
+                    <div class="live-tab" data-tab="notes" onclick="switchLiveTab('notes')">Notes</div>
+                </div>
+                <div id="poll-container">
+                    <p style="color:#94a3b8; text-align:center; padding:20px;">No active polls right now.</p>
+                </div>
+                <div id="notes-container">
+                    <textarea id="notes-area" placeholder="Type your class notes here... (Auto-saved)"></textarea>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg"><strong>System:</strong> Welcome to the live chat!</div>
+                </div>
+                <div class="chat-input">
+                    <button id="raise-hand-btn" onclick="raiseHand()" title="Raise Hand">✋</button>
+                    <input type="text" id="chat-input-field" placeholder="Say something..." onkeypress="handleChatKey(event)">
+                    <button onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+
+            <div class="roadmap-node locked" id="cert-node">
+                <div class="roadmap-icon"><i class='bx bx-certification'></i></div>
+                <div style="flex:1;">
+                    <h3 style="margin: 0 0 5px 0; color: #94a3b8;">Course Certificate</h3>
+                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Complete all modules to unlock</p>
+                </div>
+                <button class="btn" id="cert-btn" style="background: transparent; color: #64748b; border: 1px solid #64748b; padding: 8px 15px; border-radius: 8px; cursor:not-allowed;" disabled>Locked</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const getApiBase = () => {
+        const hn = window.location.hostname;
+        const proto = window.location.protocol;
+        if (hn === 'localhost' || hn === '127.0.0.1') {
+            return window.location.pathname.startsWith('/practice/') ? `${proto}//${hn}/practice/` : `${proto}//${hn}/`;
+        }
+        return ''; // For production server, use relative path
+    };
+    const API_BASE = getApiBase();
+
+    // Redirect to Course Details
+    function viewCourse(id) {
+        window.location.href = 'course_details.html?id=' + id;
+    }
+    
+    function openCourseRoadmap(courseName) {
+        document.getElementById('roadmap-course-title').textContent = courseName + " Journey";
+        
+        // Dynamically update Module 1 to reflect the course name and correct actions
+        const node1 = document.getElementById('node-mod1');
+        if (node1) {
+            node1.innerHTML = `
+                <div class="roadmap-icon" style="border-color: #f59e0b; color: #f59e0b;"><i class='bx bx-play'></i></div>
+                <div style="flex:1;">
+                        <h3 style="margin: 0 0 5px 0; color: white;">Module 1: Intro to ${courseName}</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: #f59e0b;">Learn the Core Concepts</p>
+                </div>
+                <button class="btn" style="background: #f59e0b; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer; font-weight:bold;" onclick="startDemoVideo('${courseName} - Module 1', 'nu_pCVPKzTk', 0)"><i class='bx bx-play'></i> Watch Video</button>
+                <button class="btn" style="background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer; font-weight:bold; margin-left: 10px;" onclick="viewCourseNotes('${courseName}')"><i class='bx bx-book-open'></i> Read Notes</button>
+            `;
+        }
+
+        document.getElementById('roadmap-modal').style.display = 'block';
+    }
+
+    window.viewCourseNotes = function(courseName) {
+        fetch(API_BASE + 'get_notes.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(notes => {
+                const courseNotes = notes.filter(n => n.course_name && n.course_name.toLowerCase() === courseName.toLowerCase() && n.status === 'approved');
+                if (courseNotes.length > 0) {
+                    window.open(API_BASE + courseNotes[0].file_path, '_blank');
+                } else {
+                    alert(`No specific notes uploaded by the teacher for "${courseName}" yet.\n\nPlease check the community "Learning Zone" or ask your teacher to upload course materials.`);
+                }
+            }).catch(err => {
+                alert('Could not fetch notes at this time.');
+            });
+    }
+
+    window.startDemoVideo = function(moduleName, videoId, nodeIndex) {
+        openVideo(moduleName, videoId, false);
+        
+        // Simulate completing the video after 5 seconds to unlock the next level
+        setTimeout(() => {
+            const nodes = document.querySelectorAll('#roadmap-container .roadmap-node');
+            const current = nodes[nodeIndex];
+            const next = nodes[nodeIndex + 1];
+            
+            if (current) {
+                current.className = 'roadmap-node completed';
+                current.style = '';
+                current.querySelector('.roadmap-icon').innerHTML = "<i class='bx bx-check'></i>";
+                current.querySelector('.roadmap-icon').style = "background: #10b981; border-color: #10b981; color: white;";
+                current.querySelector('h3').style.color = "white";
+                current.querySelector('p').textContent = "Score: 100% - Mastered";
+                current.querySelector('p').style.color = "#10b981";
+                current.querySelector('button').textContent = "Re-Watch";
+                current.querySelector('button').disabled = false;
+                current.querySelector('button').style = "background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer;";
+                current.querySelector('button').onclick = function() { openVideo(moduleName, videoId, false); };
+            }
+            
+            if (next && next.id !== 'cert-node') {
+                next.className = 'roadmap-node';
+                next.style = "border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);";
+                next.querySelector('.roadmap-icon').style = "border-color: #f59e0b; color: #f59e0b; background: transparent;";
+                next.querySelector('.roadmap-icon').innerHTML = "<i class='bx bx-play'></i>";
+                next.querySelector('h3').style.color = "white";
+                next.querySelector('p').textContent = "Current Objective";
+                next.querySelector('p').style.color = "#f59e0b";
+                next.querySelector('button').textContent = "Start Level";
+                next.querySelector('button').disabled = false;
+                next.querySelector('button').style = "background: #f59e0b; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor:pointer; font-weight:bold;";
+                next.querySelector('button').onclick = function() { startDemoVideo('Module 2: Deep Dive', 'nu_pCVPKzTk', 1); };
+            } else if (next && next.id === 'cert-node') {
+                completeDemoCourse(document.getElementById('roadmap-course-title').textContent.replace(' Journey', ''));
+            }
+        }, 5000); // 5-second delay to simulate a video being watched
+    }
+
+    function completeDemoCourse(courseName) {
+        alert("Module Completed! You've unlocked your certificate.");
+        document.getElementById('cert-node').className = 'roadmap-node completed';
+        document.querySelector('#cert-node .roadmap-icon').style = 'background: #f59e0b; border-color: #f59e0b; color: white;';
+        document.querySelector('#cert-node h3').style.color = 'white';
+        document.querySelector('#cert-node p').style.color = '#f59e0b';
+        document.querySelector('#cert-node p').textContent = 'Ready to download!';
+        const btn = document.getElementById('cert-btn');
+        btn.disabled = false;
+        btn.style = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);';
+        btn.textContent = 'Download PDF';
+        btn.onclick = () => generateCertificate(courseName);
+    }
+
+    // --- AUTO-REDIRECT FIX FOR SESSIONS ---
+    // If on 127.0.0.1 (Live Server), redirect to localhost/practice (XAMPP) so PHP sessions work.
+    if (window.location.hostname === '127.0.0.1') {
+        let path = window.location.pathname;
+        // Ensure path includes '/practice' for XAMPP structure
+        if (!path.includes('/practice')) {
+            path = '/practice' + path;
+        }
+        window.location.href = 'http://localhost' + path + window.location.search;
+    }
+
+    function toggleNotify(btn) {
+        if (btn.innerText === "Notify Me") {
+            btn.innerText = "🔔 Notified";
+            btn.style.background = "rgba(16, 185, 129, 0.2)";
+            btn.style.color = "#34d399";
+            btn.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+            alert("You will be notified when this class starts!");
+        } else {
+            btn.innerText = "Notify Me";
+            btn.style.background = ""; // Reset to default CSS
+            btn.style.color = "";
+            btn.style.border = "";
+        }
+    }
+
+    // Search Filter Logic
+    function filterClasses() {
+        const input = document.getElementById('search-input');
+        const filter = input.value.toUpperCase();
+        const cards = document.querySelectorAll('.card.recorded');
+
+        cards.forEach(card => {
+            const title = card.querySelector('h3').innerText;
+            if (title.toUpperCase().indexOf(filter) > -1) {
+                card.style.display = "";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+
+    function filterByCategory(category, btnElement) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+        
+        const cards = document.querySelectorAll('.grid .card.recorded');
+        cards.forEach(card => {
+            if (category === 'All' || card.getAttribute('data-category') === category) {
+                card.style.display = "";
+            } else { card.style.display = "none"; }
+        });
+    }
+
+    // Video Modal Logic
+    const modal = document.getElementById('video-modal');
+    const titleEl = document.getElementById('video-title');
+    
+    var player; // YouTube Player Instance
+    var isPlaying = false;
+    var isDragging = false;
+    var updateInterval;
+
+    let studentPeer = null;
+    let currentCall = null;
+    let currentVideoType = 'youtube'; // Tracks which player to control
+
+    function openVideo(title, videoId, isLive = false, localPath = null) {
+        // Clear any existing progress bar interval
+        if (updateInterval) clearInterval(updateInterval);
+
+        // Reset UI
+        if (isLive) {
+            switchLiveTab('chat');
+            document.querySelector('.chat-wrapper').style.display = 'flex';
+            document.getElementById('yt-player').style.display = 'none';
+            document.getElementById('local-player').style.display = 'none';
+            document.querySelector('.custom-controls').style.display = 'flex';
+            document.getElementById('jitsi-container').style.display = 'none';
+            document.querySelector('.live-tab[data-tab="chat"]').style.display = 'block';
+            document.querySelector('.live-tab[data-tab="polls"]').style.display = 'block';
+        } else {
+            document.querySelector('.chat-wrapper').style.display = 'none';
+            document.getElementById('yt-player').style.display = localPath ? 'none' : 'block';
+            document.getElementById('local-player').style.display = localPath ? 'block' : 'none';
+            document.querySelector('.custom-controls').style.display = 'flex';
+            document.getElementById('jitsi-container').style.display = 'none';
+            document.querySelector('.live-tab[data-tab="chat"]').style.display = 'none';
+            document.querySelector('.live-tab[data-tab="polls"]').style.display = 'none';
+        }
+        
+        document.getElementById('poll-container').innerHTML = '<p style="color:#94a3b8; text-align:center; padding:20px;">No active polls right now.</p>';
+        document.querySelector('.live-tab[data-tab="polls"]').classList.remove('notify');
+
+        // Lock Body Scroll
+        document.body.style.overflow = 'hidden';
+
+        titleEl.textContent = title;
+
+        // Reset Overlay (Show black screen initially)
+        const overlay = document.querySelector('.video-overlay');
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '1';
+        
+        // Initialize or Load Player
+        if (localPath && localPath !== 'null' && localPath !== '') {
+            currentVideoType = 'local';
+            const lp = document.getElementById('local-player');
+            lp.src = API_BASE + localPath;
+            lp.play();
+            isPlaying = true;
+            document.getElementById('play-pause-btn').innerHTML = '<span class="material-symbols-rounded">pause</span>';
+            updateInterval = setInterval(updateProgressBar, 500);
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+        } else if (player) {
+            currentVideoType = 'youtube';
+            player.cueVideoById(videoId || 'nu_pCVPKzTk'); // Cues silently without auto-playing audio
+        } else {
+            currentVideoType = 'youtube';
+            player = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId || 'nu_pCVPKzTk',
+                playerVars: {
+                    'playsinline': 1, 'controls': 0, 'rel': 0, 
+                    'modestbranding': 1, 'iv_load_policy': 3, 'disablekb': 1, 'fs': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+            // Note: onPlayerReady will handle hiding the overlay for new players
+        }
+        
+        // Load saved notes
+        const savedNotes = localStorage.getItem('class_notes_' + videoId) || '';
+        document.getElementById('notes-area').value = savedNotes;
+        document.getElementById('notes-area').oninput = function() {
+            localStorage.setItem('class_notes_' + videoId, this.value);
+        };
+
+        modal.style.display = "block";
+    }
+
+    function onPlayerReady(event) {
+        // Intentionally left blank to prevent auto-playing background audio
+    }
+
+    function onPlayerStateChange(event) {
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        // YT.PlayerState.PLAYING is 1
+        if (event.data === YT.PlayerState.PLAYING) {
+            isPlaying = true;
+            if(playPauseBtn) playPauseBtn.innerHTML = '<span class="material-symbols-rounded">pause</span>';
+
+            // Start updating the progress bar
+            updateInterval = setInterval(updateProgressBar, 500);
+
+            // Ensure overlay is hidden when video actually starts playing
+            const overlay = document.querySelector('.video-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+
+            // Populate quality levels dynamically
+            const qualityLevels = player.getAvailableQualityLevels();
+            const qualitySelect = document.querySelector('.quality-select');
+            if (qualitySelect && qualityLevels && qualityLevels.length > 0) {
+                qualitySelect.innerHTML = '<option value="default">Auto</option>'; // Reset
+                const qualityMap = {
+                    'hd2160': '4K', 'hd1440': '1440p', 'hd1080': '1080p', 'hd720': '720p', 
+                    'large': '480p', 'medium': '360p', 'small': '240p', 'tiny': '144p', 'highres': '>1080p'
+                };
+                qualityLevels.forEach(level => {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = qualityMap[level] || level;
+                    qualitySelect.appendChild(option);
+                });
+            }
+
+        } else {
+            isPlaying = false;
+            if(playPauseBtn) playPauseBtn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+            clearInterval(updateInterval);
+        }
+    }
+
+    function formatTime(timeInSeconds) {
+        const seconds = Math.floor(timeInSeconds);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    }
+
+    function updateProgressBar() {
+        if (isDragging) return;
+        let currentTime = 0, duration = 0;
+        if (currentVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            currentTime = lp.currentTime;
+            duration = lp.duration;
+        } else {
+            if (!player || typeof player.getCurrentTime !== 'function') return;
+            currentTime = player.getCurrentTime();
+            duration = player.getDuration();
+        }
+        const seekBar = document.getElementById('seek-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationTimeEl = document.getElementById('duration-time');
+
+        if (duration > 0) {
+            if (seekBar) seekBar.value = (currentTime / duration) * 100;
+            if (currentTimeEl) currentTimeEl.textContent = formatTime(currentTime);
+            if (durationTimeEl) durationTimeEl.textContent = formatTime(duration);
+        }
+    }
+
+    // Custom Control Functions
+    function togglePlay() {
+        const btn = document.getElementById('play-pause-btn');
+        if (currentVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            if (isPlaying) { lp.pause(); btn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>'; isPlaying = false; }
+            else { lp.play(); btn.innerHTML = '<span class="material-symbols-rounded">pause</span>'; isPlaying = true; }
+            return;
+        }
+        if(!player) return;
+        if(isPlaying) {
+            player.pauseVideo();
+            btn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+            isPlaying = false;
+        } else {
+            player.playVideo();
+            btn.innerHTML = '<span class="material-symbols-rounded">pause</span>';
+            isPlaying = true;
+        }
+    }
+
+    function skip(seconds) {
+        if (currentVideoType === 'local') {
+            document.getElementById('local-player').currentTime += seconds;
+            return;
+        }
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+        const currentTime = player.getCurrentTime();
+        player.seekTo(currentTime + seconds, true);
+    }
+
+    function handleSeek(value) {
+        if (currentVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            if (lp.duration) lp.currentTime = (value / 100) * lp.duration;
+            return;
+        }
+        if (!player || typeof player.getDuration !== 'function') return;
+        const duration = player.getDuration();
+        if (duration > 0) {
+            const newTime = (value / 100) * duration;
+            player.seekTo(newTime, true);
+        }
+    }
+
+    function changeSpeed(rate) {
+        if (currentVideoType === 'local') {
+            document.getElementById('local-player').playbackRate = parseFloat(rate);
+            return;
+        }
+        if (player && typeof player.setPlaybackRate === 'function') player.setPlaybackRate(parseFloat(rate));
+    }
+
+    function changeQuality(quality) {
+        if (currentVideoType === 'local') return; // Not natively supported without HLS tracking
+        if (player && typeof player.setPlaybackQuality === 'function') player.setPlaybackQuality(quality);
+    }
+
+    function toggleMute() {
+        const icon = document.getElementById('mute-icon');
+        if (currentVideoType === 'local') {
+            const lp = document.getElementById('local-player');
+            lp.muted = !lp.muted;
+            icon.textContent = lp.muted ? 'volume_off' : 'volume_up';
+            return;
+        }
+        if(!player) return;
+        if(player.isMuted()) {
+            player.unMute();
+            icon.textContent = 'volume_up';
+        } else {
+            player.mute();
+            icon.textContent = 'volume_off';
+        }
+    }
+
+    function setVolume(val) {
+        if (currentVideoType === 'local') {
+            document.getElementById('local-player').volume = val / 100;
+            return;
+        }
+        if(player) player.setVolume(val);
+    }
+
+    function raiseHand() {
+        const btn = document.getElementById('raise-hand-btn');
+        btn.style.background = 'rgba(251, 191, 36, 0.3)'; // Highlight
+        
+        // Notify Teacher (via LocalStorage for demo)
+        const username = localStorage.getItem('username') || 'Student';
+        const topic = document.getElementById('video-title').innerText.replace('🔴 Live: ', '');
+        
+        localStorage.setItem('teacher_notification', JSON.stringify({
+            type: 'raise_hand',
+            student: username,
+            topic: topic,
+            time: Date.now()
+        }));
+
+        // Add to chat
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.innerHTML += `<div class="chat-msg" style="color:#fbbf24"><strong>System:</strong> You raised your hand ✋</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        setTimeout(() => { btn.style.background = ''; }, 3000);
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input-field');
+        const msg = input.value.trim();
+        if(msg) {
+            const chatBox = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `<strong>You:</strong> ${msg}`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = '';
+        }
+    }
+
+    function handleChatKey(e) {
+        if(e.key === 'Enter') sendChatMessage();
+    }
+
+    function toggleMiniPlayer() {
+        const modal = document.getElementById('video-modal');
+        modal.classList.remove('theater-active');
+        modal.classList.remove('fullscreen-active');
+        modal.classList.toggle('mini-active');
+    }
+
+    function toggleTheater() {
+        const modal = document.getElementById('video-modal');
+        modal.classList.toggle('theater-active');
+    }
+
+    function toggleFullscreen() {
+        const modal = document.getElementById('video-modal');
+        
+        if (!document.fullscreenElement) {
+            modal.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // Listen for fullscreen change events (ESC key support)
+    document.addEventListener('fullscreenchange', () => {
+        const modal = document.getElementById('video-modal');
+        if (document.fullscreenElement) {
+            modal.classList.add('fullscreen-active');
+        } else {
+            modal.classList.remove('fullscreen-active');
+        }
+    });
+
+    function switchLiveTab(tabName) {
+        const chatMsgs = document.getElementById('chat-messages');
+        const chatInput = document.querySelector('.chat-input');
+        const pollContainer = document.getElementById('poll-container');
+        const notesContainer = document.getElementById('notes-container');
+        
+        document.querySelectorAll('.live-tab').forEach(t => t.classList.remove('active'));
+        const activeTab = document.querySelector(`.live-tab[data-tab="${tabName}"]`);
+        activeTab.classList.add('active');
+        activeTab.classList.remove('notify'); // Mark as read
+
+        if (tabName === 'chat') {
+            chatMsgs.style.display = 'flex';
+            chatInput.style.display = 'flex';
+            pollContainer.style.display = 'none';
+            notesContainer.style.display = 'none';
+        } else if (tabName === 'notes') {
+            chatMsgs.style.display = 'none';
+            chatInput.style.display = 'none';
+            pollContainer.style.display = 'none';
+            notesContainer.style.display = 'block';
+        } else {
+            chatMsgs.style.display = 'none';
+            chatInput.style.display = 'none';
+            pollContainer.style.display = 'block';
+            notesContainer.style.display = 'none';
+        }
+    }
+
+    function renderPoll(pollData) {
+        const pollContainer = document.getElementById('poll-container');
+        if (!pollContainer) return;
+
+        // Show notification on tab if not active
+        const pollTab = document.querySelector('.live-tab[data-tab="polls"]');
+        if (pollTab && !pollTab.classList.contains('active')) {
+            pollTab.classList.add('notify');
+        }
+
+        pollContainer.innerHTML = `
+            <div class="poll-active" id="${pollData.id}">
+                <h4>${pollData.question}</h4>
+                <div class="poll-options">
+                    ${pollData.options.map((opt, i) => `<button onclick="handleVote(this, ${i})">${opt}</button>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function handleVote(btn, index) {
+        const optionsContainer = btn.parentElement;
+        optionsContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+        btn.style.background = '#3b82f6';
+        btn.style.borderColor = '#3b82f6';
+        btn.innerHTML += ' (Voted)';
+
+        // Send vote to teacher
+        localStorage.setItem('poll_vote', JSON.stringify({
+            optionIndex: index,
+            timestamp: Date.now()
+        }));
+    }
+
+    function closeVideo() {
+        modal.style.display = "none";
+        document.body.style.overflow = ''; // Restore scroll
+        
+        if(typeof currentCall !== 'undefined' && currentCall) currentCall.close();
+        if(typeof studentPeer !== 'undefined' && studentPeer) studentPeer.destroy();
+
+        if (currentVideoType === 'local') {
+            document.getElementById('local-player').pause();
+            document.getElementById('local-player').src = '';
+        } else if(player) player.stopVideo();
+        if(updateInterval) clearInterval(updateInterval);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeVideo();
+        }
+        const payModal = document.getElementById('payment-modal');
+        if (event.target == payModal) {
+            closePaymentModal();
+        }
+        const detailsModal = document.getElementById('course-details-modal');
+        if (event.target == detailsModal) {
+            closeDetailsModal();
+        }
+    }
+
+    // Generate Certificate PDF
+    function generateCertificate(courseName) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        // Background & Border Styling
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, 297, 210, 'F');
+        doc.setDrawColor(59, 130, 246);
+        doc.setLineWidth(2);
+        doc.rect(10, 10, 277, 190, 'S');
+        
+        // Certificate Typography
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(40);
+        doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(16);
+        doc.text("This is proudly presented to", 148.5, 80, { align: "center" });
+        
+        const studentName = localStorage.getItem('username') || 'Student';
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(59, 130, 246);
+        doc.setFontSize(30);
+        doc.text(studentName, 148.5, 105, { align: "center" });
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(16);
+        doc.text("for successfully completing the course:", 148.5, 130, { align: "center" });
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(24);
+        doc.setTextColor(245, 158, 11);
+        doc.text(courseName, 148.5, 150, { align: "center" });
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.setTextColor(148, 163, 184);
+        doc.text("StudySphere Learning Platform", 148.5, 180, { align: "center" });
+        
+        doc.save(`Certificate_${courseName.replace(/\s+/g, '_')}.pdf`);
+    }
+
+    // Move Poll Listener OUTSIDE the interval so it doesn't cause a massive memory leak!
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'live_poll_data' && e.newValue) renderPoll(JSON.parse(e.newValue));
+    });
+
+    // --- FETCH ENROLLED COURSES ---
+    let enrolledCourseIds = [];
+
+    function loadEnrolledCourses() {
+        fetch(API_BASE + 'get_my_courses.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(courses => {
+                const container = document.getElementById('my-enrolled-courses-container');
+                // Clear container but keep the static example hidden or just clear all
+                container.innerHTML = '';
+                
+                enrolledCourseIds = courses.map(c => c.id); // Store IDs to filter available courses
+
+                if (courses.length > 0) {
+                    container.innerHTML = courses.map(c => {
+                        const safeName = (c.course_name || 'Course').replace(/'/g, "\\'");
+                        return `
+                        <div class="card live" style="border-left: 4px solid #3b82f6;">
+                            <span class="status-badge" style="background:rgba(59,130,246,0.2); color:#3b82f6;">ENROLLED</span>
+                            <h3>${c.course_name}</h3>
+                            <p>Enrolled on: ${new Date(c.enrolled_at).toLocaleDateString()}</p>
+                            <button onclick="openCourseRoadmap('${safeName}')" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);"><i class='bx bx-map-alt'></i> Start Learning Journey</button>
+                        </div>
+                    `}).join('');
+                } else {
+                    container.innerHTML = '<p style="color:#94a3b8; padding:10px;">You haven\'t enrolled in any courses yet.</p>';
+                }
+                loadAvailableCourses(); // Load available courses AFTER we know what we own
+            })
+            .catch(err => {
+                console.error('Error loading enrolled courses:', err);
+                loadAvailableCourses(); // Attempt to load available courses anyway
+            });
+    }
+
+    // Fetch Available Courses
+    function loadAvailableCourses() {
+        fetch(API_BASE + 'get_public_courses.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(courses => {
+                const container = document.getElementById('available-courses-container');
+
+                // Safety Check: Ensure response is an array
+                if (!Array.isArray(courses)) {
+                    console.error('Invalid courses data:', courses);
+                    container.innerHTML = '<p style="padding:20px; color:#ef4444;">Unable to load courses data.</p>';
+                    return;
+                }
+
+                // Filter: Only show courses user is NOT enrolled in AND that are APPROVED.
+                courses = courses.filter(c => c.status !== 'pending');
+                
+                const availableCourses = courses.filter(c => 
+                    !enrolledCourseIds.some(eid => eid == c.id)
+                );
+
+                if (availableCourses.length > 0) {
+                    container.innerHTML = availableCourses.map(c => {
+                        // Escape single quotes to prevent JavaScript syntax errors in the onclick handler
+                        const safeName = (c.course_name || 'Course').replace(/'/g, "\\'");
+                        
+                        // Determine thumbnail: use uploaded image if available, else default gradient
+                        let thumbHTML = '';
+                        if (c.course_image) {
+                            // Add onerror handler in case image is missing
+                            thumbHTML = `<img src="${c.course_image}" class="card-thumbnail" style="object-fit:cover; height:200px;" alt="${safeName}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
+                            // Hidden fallback that shows if img fails
+                            thumbHTML += `<div class="card-thumbnail" style="background:linear-gradient(135deg, #3b82f6, #1e40af); display:none; align-items:center; justify-content:center; color:white; font-size:3rem;"><span class="material-symbols-rounded">school</span></div>`;
+                        } else {
+                            thumbHTML = `<div class="card-thumbnail" style="background:linear-gradient(135deg, #3b82f6, #1e40af); display:flex; align-items:center; justify-content:center; color:white; font-size:3rem;"><span class="material-symbols-rounded">school</span></div>`;
+                        }
+
+                        return `
+                        <div class="card recorded" onclick="viewCourse('${c.id}')" style="cursor: pointer; min-width: 300px;">
+                            ${thumbHTML}
+                            <div class="card-body">
+                                <h3>${c.course_name}</h3>
+                                <p>Price: ₹${c.course_price}</p>
+                                <button onclick="event.stopPropagation(); viewCourse('${c.id}')">View Details</button>
+                            </div>
+                        </div>
+                    `; }).join('');
+                } else {
+                    container.innerHTML = '<p style="padding:20px; color:#94a3b8;">No new courses available right now.</p>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading available courses:', err);
+                const container = document.getElementById('available-courses-container');
+                if (container) container.innerHTML = `<p style="padding:20px; color:#ef4444;">Unable to load courses. <br><small>${err.message}</small></p>`;
+            });
+    }
+
+    function loadLiveClasses() {
+        fetch(API_BASE + 'get_live_classes.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(classes => {
+                const container = document.getElementById('live-grid');
+                if (classes && classes.length > 0) {
+                    container.innerHTML = classes.map(c => {
+                        if (c.status === 'pending_verification') return ''; // Admin hasn't approved it yet
+                        const scheduledTime = new Date(c.scheduled_time);
+                        const now = new Date();
+                        const diff = scheduledTime - now;
+                        
+                        let badgeHtml = '';
+                        let timeDisplay = '';
+                        let buttonHtml = '';
+                        const localPath = c.local_video_path || '';
+                        
+                        if (c.status === 'live') { 
+                            badgeHtml = '<span class="status-badge status-live">🔴 LIVE</span>';
+                            timeDisplay = 'Happening Now';
+                            const safeTitle = c.title.replace(/'/g, "\\'");
+                            buttonHtml = `<button onclick="openVideo('🔴 Live: ${safeTitle}', '${c.video_id || 'nu_pCVPKzTk'}', true)">Join Live</button>`;
+                        } else if (c.status === 'scheduled') {
+                            badgeHtml = '<span class="status-badge status-scheduled">📅 SCHEDULED</span>';
+                            
+                            // Calculate display string
+                            const minutes = Math.floor(diff / 60000);
+                            if (minutes < 60) {
+                                timeDisplay = `Starts in ${minutes}m`;
+                            } else {
+                                timeDisplay = scheduledTime.toLocaleString([], {weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
+                            }
+                            
+                            buttonHtml = `<button class="notify-btn" onclick="toggleNotify(this)">Notify Me</button>`;
+                        } else {
+                            badgeHtml = '<span class="status-badge" style="background:rgba(255,255,255,0.1); color:#94a3b8;">RECORDED</span>';
+                            timeDisplay = 'Video Available';
+                            const safeTitle = c.title.replace(/'/g, "\\'");
+                            buttonHtml = `<button onclick="openVideo('${safeTitle}', '${c.video_id || 'nu_pCVPKzTk'}', false, '${localPath}')">Watch Recording</button>`;
+                        }
+
+                        // Add offset data for frontend countdown updates
+                        const offsetMinutes = Math.floor(diff / 60000);
+
+                        return `
+                            <div class="card live" data-offset="${offsetMinutes}" data-video-id="${c.video_id || 'nu_pCVPKzTk'}">
+                                ${badgeHtml}
+                                <h3>${c.title}</h3>
+                                <p>Instructor: ${c.teacher_name}</p>
+                                <p class="time-display">${timeDisplay}</p>
+                                ${buttonHtml}
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Force an immediate update so countdowns/buttons parse correctly right away
+                    updateSchedule(); 
+                } else {
+                    container.innerHTML = '<p style="color:#94a3b8; padding:20px; text-align:center; width: 100%;">No live classes scheduled right now.</p>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading live classes:', err);
+                const container = document.getElementById('live-grid');
+                if (container) container.innerHTML = `<p style="padding:20px; color:#ef4444;">Unable to load schedule.</p>`;
+            });
+    }
+
+    // Listen for New Class Notifications
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'new_class_notification' && e.newValue) {
+            const data = JSON.parse(e.newValue);
+            const notif = document.createElement('div');
+            notif.innerHTML = `📅 <b>New Class Scheduled!</b><br>${data.title}`;
+            notif.style.cssText = 'position:fixed; top:20px; right:20px; background:#1e293b; color:white; padding:15px 20px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.5); z-index:9999; animation: slideUp 0.4s; border-left: 4px solid #3b82f6;';
+            document.body.appendChild(notif);
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                notif.style.transition = '0.5s';
+                setTimeout(() => notif.remove(), 500);
+            }, 5000);
+        }
+    });
+
+    // Periodically refresh the schedule so students instantly see when a teacher clicks "Go Live"
+    setInterval(loadLiveClasses, 60000); // Increased to 60s to prevent layout lagging
+
+    function loadNotes() {
+        fetch(API_BASE + 'get_notes.php', { credentials: 'include' })
+            .then(res => res.json())
+            .then(notes => {
+                const container = document.getElementById('notes-container');
+                if (notes && notes.length > 0) {
+                    container.innerHTML = notes.map(n => `
+                        <div class="card recorded" style="min-width: 250px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="window.open('${API_BASE}${n.file_path}', '_blank')">
+                            <div style="width: 50px; height: 50px; background: #e0e7ff; border-radius: 8px; display: grid; place-items: center; color: #4338ca; font-weight: bold;">
+                                <span class="material-symbols-rounded">description</span>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 5px 0;">${n.title}</h4>
+                                <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">${n.course_name || 'General Material'} • by ${n.teacher_name}</p>
+                            </div>
+                            <span class="material-symbols-rounded" style="margin-left: auto; color: #94a3b8;">download</span>
+                        </div>
+                    `).join('');
+                } else { container.innerHTML = '<p style="color:#94a3b8; padding:20px; text-align:center; width: 100%;">No course materials available.</p>'; }
+            }).catch(err => console.error('Error loading notes:', err));
+    }
+
+    // Open Course Details Modal
+    function openCourseDetails(id, name, price) {
+        document.getElementById('detail-course-id').value = id;
+        document.getElementById('detail-course-name').textContent = name;
+        document.getElementById('detail-course-price').textContent = '₹' + price;
+        document.getElementById('course-details-modal').style.display = 'block';
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('course-details-modal').style.display = 'none';
+    }
+
+    // Transition from Details to Payment
+    function proceedToPaymentFromDetails() {
+        const id = document.getElementById('detail-course-id').value;
+        const name = document.getElementById('detail-course-name').textContent;
+        const price = document.getElementById('detail-course-price').textContent.replace('₹', '').trim();
+        closeDetailsModal();
+        openPaymentModal(id, name, price);
+    }
+
+    function openPaymentModal(id, name, price) {
+        document.getElementById('pay-course-id').value = id;
+        document.getElementById('pay-course-name').textContent = name;
+        document.getElementById('pay-amount').textContent = '₹' + price;
+        document.getElementById('payment-modal').style.display = 'block';
+    }
+
+    function closePaymentModal() {
+        document.getElementById('payment-modal').style.display = 'none';
+        // Reset modal to initial state for next time
+        setTimeout(() => {
+            document.getElementById('payment-form-step').style.display = 'block';
+            document.getElementById('payment-processing-step').style.display = 'none';
+            document.getElementById('payment-success-step').style.display = 'none';
+        }, 300); // Delay to allow fade out animation
+    }
+
+    function processEnrollment() {
+        const id = document.getElementById('pay-course-id').value;
+        
+        // Hide form, show spinner
+        document.getElementById('payment-form-step').style.display = 'none';
+        document.getElementById('payment-processing-step').style.display = 'block';
+
+        const port = window.location.port;
+        const protocol = window.location.protocol;
+        const API_BASE = (protocol === 'file:' || (port && port !== '80' && port !== '443')) 
+            ? 'http://localhost/practice/' 
+            : '';
+
+        // Simulate network delay for a better user experience
+        setTimeout(() => {
+            fetch(API_BASE + 'enroll_course.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ course_id: id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showEnrollmentSuccess();
+                    triggerConfetti(); // Celebration!
+                } else {
+                    if (data.message && data.message.toLowerCase().includes('login')) {
+                        alert('Session expired or invalid domain. Please login again.');
+                        window.location.href = 'login.html';
+                    }
+                    alert(data.message || 'Enrollment failed.');
+                    // On failure, show form again
+                    document.getElementById('payment-processing-step').style.display = 'none';
+                    document.getElementById('payment-form-step').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error processing enrollment. Please try again.');
+                // On error, show form again
+                document.getElementById('payment-processing-step').style.display = 'none';
+                document.getElementById('payment-form-step').style.display = 'block';
+            });
+        }, 1500); // 1.5 second delay for effect
+    }
+
+    function showEnrollmentSuccess() {
+        document.getElementById('payment-processing-step').style.display = 'none';
+        document.getElementById('payment-success-step').style.display = 'block';
+    }
+
+    function finishEnrollmentFlow() {
+        closePaymentModal();
+        loadEnrolledCourses();
+    }
+
+    // Confetti Animation
+    function triggerConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 150;
+        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                size: Math.random() * 8 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: 100,
+                gravity: 0.2
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let activeParticles = 0;
+
+            particles.forEach(p => {
+                if (p.life > 0) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.life -= 1;
+                    p.size *= 0.96;
+
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    activeParticles++;
+                }
+            });
+
+            if (activeParticles > 0) requestAnimationFrame(animate);
+            else ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        animate();
+    }
+
+    // Dynamic Schedule Logic
+    function updateSchedule() {
+        const cards = document.querySelectorAll('.card[data-offset]');
+
+        const now = new Date();
+
+        cards.forEach(card => {
+            const offsetMinutes = parseInt(card.getAttribute('data-offset'));
+            const targetTime = new Date(now.getTime() + offsetMinutes * 60000); // Calculate target time based on offset relative to load time? 
+            // Actually, for a persistent demo, let's assume the offset is relative to "Page Load" 
+            // so the user always sees the effect.
+            
+            // We store the absolute target time in a property so it doesn't keep moving
+            if (!card.targetDate) {
+                card.targetDate = new Date(Date.now() + offsetMinutes * 60000);
+            }
+
+            const diff = card.targetDate - new Date();
+            const btn = card.querySelector('button');
+            const badge = card.querySelector('.status-badge');
+            const timeDisplay = card.querySelector('.time-display');
+
+            if (diff <= 0) {
+                // Class has started
+                if (btn.classList.contains('notify-btn')) {
+                    btn.classList.remove('notify-btn');
+                    // Reset styles from toggleNotify
+                    btn.style.background = "";
+                    btn.style.color = "";
+                    btn.style.border = "";
+
+                    const videoId = card.getAttribute('data-video-id') || 'nu_pCVPKzTk';
+                    btn.textContent = "Join Live";
+                    btn.onclick = () => openVideo('🔴 Live: ' + card.querySelector('h3').innerText, videoId, true);
+                    
+                    badge.className = 'status-badge status-live';
+                    badge.textContent = '🔴 LIVE';
+                    
+                    timeDisplay.textContent = "Happening Now";
+                    
+                    // Add pulse effect if missing
+                    if(!card.querySelector('.pulse')) {
+                        const pulse = document.createElement('span');
+                        pulse.className = 'pulse';
+                        card.prepend(pulse);
+                    }
+                }
+            } else if (diff <= 60000) { // Less than 1 minute (Show Countdown)
+                const seconds = Math.floor((diff % 60000) / 1000);
+                timeDisplay.innerHTML = `Starts in <span class="countdown">00:${seconds < 10 ? '0'+seconds : seconds}</span>`;
+            } else if (diff < 3600000) { // Less than 1 hour (Show Minutes only)
+                const minutes = Math.ceil(diff / 60000);
+                timeDisplay.textContent = `Starts in ${minutes}m`;
+            }
+        });
+    }
+
+    setInterval(updateSchedule, 30000); // Update every 30 seconds
+    updateSchedule(); // Run immediately
+
+    // Keyboard Controls
+    document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('video-modal');
+        if (modal.style.display === 'block' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent scrolling
+                togglePlay();
+            } else if (e.code === 'ArrowLeft') {
+                skip(-10);
+            } else if (e.code === 'ArrowRight') {
+                skip(10);
+            }
+        }
+    });
+
+    // Watch Later Logic
+    function addToWatchLater(title, videoId, thumbnail) {
+        let list = JSON.parse(localStorage.getItem('watchLater')) || [];
+        if (!list.some(v => v.id === videoId)) {
+            list.push({ title, id: videoId, thumb: thumbnail });
+            localStorage.setItem('watchLater', JSON.stringify(list));
+            renderWatchLater();
+            alert('Added to Watch Later');
+        } else {
+            alert('Already in Watch Later');
+        }
+    }
+
+    function removeFromWatchLater(videoId) {
+        let list = JSON.parse(localStorage.getItem('watchLater')) || [];
+        list = list.filter(v => v.id !== videoId);
+        localStorage.setItem('watchLater', JSON.stringify(list));
+        renderWatchLater();
+    }
+
+    function renderWatchLater() {
+        const list = JSON.parse(localStorage.getItem('watchLater')) || [];
+        const container = document.getElementById('watch-later-container');
+        const section = document.getElementById('watch-later-section');
+        
+        if (list.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+        
+        section.style.display = 'block';
+        container.innerHTML = list.map(v => `
+            <div class="card recorded">
+                <button class="watch-later-btn" onclick="removeFromWatchLater('${v.id}')" style="background:#ef4444;" title="Remove"><span class="material-symbols-rounded" style="font-size:18px">delete</span></button>
+                <img src="${v.thumb}" class="card-thumbnail" alt="${v.title}">
+                <div class="card-body">
+                    <h3>${v.title}</h3>
+                    <button onclick="openVideo('${v.title}', '${v.id}', false)">Watch Now</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        renderWatchLater();
+        loadEnrolledCourses();
+        loadLiveClasses();
+        loadNotes();
+    });
+</script>
+</body>
+</html>

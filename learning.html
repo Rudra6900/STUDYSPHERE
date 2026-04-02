@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learning Zone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="all.css" />
+  <link rel="stylesheet" href="learning.css" />
+  <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js" defer></script>
+  <style>
+    /* Consistent Bottom Menu Style */
+    .menu {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 30px;
+        border-radius: 50px;
+        display: flex;
+        gap: clamp(20px, 4vw, 40px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        width: auto;
+        min-width: 300px;
+        justify-content: center;
+    }
+    .link .link-icon { font-family: 'Material Symbols Rounded'; font-size: 24px; }
+    body { padding-bottom: 100px; }
+
+    /* Restore Dashboard Originality (Theme Consistency) */
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        min-height: 100vh;
+        overflow-x: hidden;
+        font-family: 'Outfit', sans-serif !important;
+    }
+    .floating-bg {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: -1;
+    }
+    .float-item {
+        position: absolute;
+        animation: float 20s infinite linear;
+        opacity: 0.15;
+    }
+    @keyframes float {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -50px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+        100% { transform: translate(0, 0) rotate(360deg); }
+    }
+    header h1 {
+        background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗂️ Flashcards</h1>
+    <div class="streak-counter" style="position:absolute; right:20px; top:20px; background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:20px; font-weight:bold; color:white; backdrop-filter:blur(4px);">🔥 0</div>
+  </header>
+
+  <div class="floating-bg">
+      <box-icon name='book-open' color="white" class="float-item" style="top: 15%; left: 10%; width: 80px; height: 80px; animation-duration: 25s;"></box-icon>
+      <box-icon name='graduation' type='solid' color="white" class="float-item" style="top: 75%; left: 85%; width: 120px; height: 120px; animation-duration: 30s; animation-delay: -5s;"></box-icon>
+      <box-icon name='brain' type='solid' color="white" class="float-item" style="top: 45%; left: 45%; width: 60px; height: 60px; animation-duration: 20s; animation-delay: -10s;"></box-icon>
+      <box-icon name='pencil' type='solid' color="white" class="float-item" style="top: 85%; left: 15%; width: 100px; height: 100px; animation-duration: 22s; animation-delay: -2s;"></box-icon>
+      <box-icon name='calculator' type='solid' color="white" class="float-item" style="top: 25%; left: 90%; width: 70px; height: 70px; animation-duration: 28s; animation-delay: -8s;"></box-icon>
+      <box-icon name='bulb' type='solid' color="white" class="float-item" style="top: 10%; left: 50%; width: 50px; height: 50px; animation-duration: 18s; animation-delay: -15s;"></box-icon>
+  </div>
+
+  <div class="learning-container">
+    <!-- FLASHCARDS VIEW -->
+    <div id="view-flashcards" class="view-section active" style="display:block">
+        <h2>Quick Review</h2>
+        <p style="color:var(--muted); text-align:center; margin-bottom:20px;">Click the card to flip it.</p>
+        
+        <div class="flashcard-scene" onclick="flipCard()">
+            <div class="flashcard-inner" id="flashcard-inner">
+                <div class="flashcard-face flashcard-front" id="fc-front">Front Content</div>
+                <div class="flashcard-face flashcard-back" id="fc-back">Back Content</div>
+            </div>
+        </div>
+        
+        <div class="fc-controls">
+            <button class="action-btn" onclick="prevCard()">← Previous</button>
+            <span id="fc-progress" style="align-self:center; font-weight:600; color:var(--muted);">1 / 5</span>
+            <button class="action-btn" onclick="nextCard()">Next →</button>
+        </div>
+    </div>
+  </div>
+
+  <nav class="menu" role="navigation" aria-label="Main Menu">
+    <a href="front.html" class="link active"><span class="link-icon">dashboard</span><span class="link-title">Dashboard</span></a>
+    <a href="classes.html" class="link"><span class="link-icon">live_tv</span><span class="link-title">Classes</span></a>
+    <a href="social.html" class="link"><span class="link-icon">group</span><span class="link-title">Social</span></a>
+    <a href="stu-ai.html" class="link"><span class="link-icon">smart_toy</span><span class="link-title">STU AI</span></a>
+    <a href="settings.html" class="link"><span class="link-icon">settings</span><span class="link-title">Settings</span></a>
+  </nav>
+
+  <script src="jsss.js"></script>
+  <script src="learning.js"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Constellation | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { margin: 0; background: #0f172a; color: white; font-family: 'Outfit', sans-serif; overflow: hidden; }
+        #info-panel {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px);
+            padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            max-width: 300px;
+        }
+        #info-panel h1 { margin: 0 0 10px 0; font-size: 1.5rem; color: #3b82f6; }
+        #info-panel p { margin: 0; color: #94a3b8; }
+        #tooltip {
+            position: absolute; display: none; background: white; color: black;
+            padding: 5px 10px; border-radius: 5px; font-size: 0.9rem;
+        }
+        a.back-btn {
+            position: absolute; top: 20px; right: 20px; color: #94a3b8; text-decoration: none;
+            background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel">
+        <h1>My Skill Map</h1>
+        <p>This is a visual representation of your learning journey. Completed skills are green, your current focus is yellow, and locked skills are grey. Click and drag to explore.</p>
+    </div>
+    <a href="front.html" class="back-btn"><i class='bx bx-arrow-back'></i> Back to Dashboard</a>
+    <div id="tooltip"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- DATA ---
+        const skills = [
+            { id: 'html', name: 'HTML Basics', status: 'completed', pos: new THREE.Vector3(-5, 0, 0) },
+            { id: 'css', name: 'CSS Styling', status: 'completed', pos: new THREE.Vector3(0, 2, 0) },
+            { id: 'js', name: 'JavaScript', status: 'current', pos: new THREE.Vector3(5, 0, 0) },
+            { id: 'react', name: 'React.js', status: 'locked', pos: new THREE.Vector3(10, 3, 0) },
+            { id: 'node', name: 'Node.js', status: 'locked', pos: new THREE.Vector3(10, -3, 0) }
+        ];
+        const connections = [ ['html', 'css'], ['css', 'js'], ['js', 'react'], ['js', 'node'] ];
+
+        // --- SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 15;
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const tooltip = document.getElementById('tooltip');
+
+        // --- COLORS ---
+        const colors = {
+            completed: 0x10b981,
+            current: 0xf59e0b,
+            locked: 0x64748b,
+            line: 0x334155
+        };
+
+        // --- CREATE NODES ---
+        const nodes = new THREE.Group();
+        skills.forEach(skill => {
+            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ color: colors[skill.status] });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.copy(skill.pos);
+            sphere.userData = skill; // Attach data
+            nodes.add(sphere);
+        });
+        scene.add(nodes);
+
+        // --- CREATE CONNECTIONS ---
+        const lines = new THREE.Group();
+        connections.forEach(conn => {
+            const startSkill = skills.find(s => s.id === conn[0]);
+            const endSkill = skills.find(s => s.id === conn[1]);
+            if (startSkill && endSkill) {
+                const material = new THREE.LineBasicMaterial({ color: colors.line });
+                // If it's the current path, make it glow
+                if (startSkill.status === 'completed' && endSkill.status === 'current') {
+                    material.color.set(colors.current);
+                }
+                const points = [startSkill.pos, endSkill.pos];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                lines.add(line);
+            }
+        });
+        scene.add(lines);
+
+        // --- INTERACTIVITY ---
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(nodes.children);
+
+            if (intersects.length > 0) {
+                const skill = intersects[0].object.userData;
+                tooltip.style.display = 'block';
+                tooltip.style.left = event.clientX + 15 + 'px';
+                tooltip.style.top = event.clientY + 'px';
+                tooltip.textContent = skill.name;
+                document.body.style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                document.body.style.cursor = 'default';
+            }
+        }
+        window.addEventListener('mousemove', onMouseMove);
+
+        // --- RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

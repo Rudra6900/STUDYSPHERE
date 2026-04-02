@@ -1,0 +1,8 @@
+# Ignore user uploaded files
+uploads/
+
+# Ignore XAMPP/OS specific hidden files
+.DS_Store
+Thumbs.db
+
+# (Optional) Ignore database config if you plan to make the repo public and want to hide credentials

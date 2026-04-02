@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Center | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="all.css" />
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js" defer></script>
+    <style>
+        /* Consistent Bottom Menu Style */
+        .menu {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 30px;
+            border-radius: 50px;
+            display: flex;
+            gap: clamp(20px, 4vw, 40px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: auto;
+            min-width: 300px;
+            justify-content: center;
+        }
+        .link .link-icon { font-family: 'Material Symbols Rounded'; font-size: 24px; }
+        body { padding-bottom: 100px; }
+
+        /* Career Page Specifics */
+        .career-container {
+            max-width: 1000px;
+            margin: 100px auto;
+            padding: 0 20px;
+        }
+        .job-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .job-info h3 { margin: 0 0 5px 0; color: white; }
+        .job-info p { margin: 0; color: #94a3b8; font-size: 0.9rem; }
+        .tags { display: flex; gap: 8px; margin-top: 10px; }
+        .tag { background: rgba(59, 130, 246, 0.1); color: #60a5fa; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+        .apply-btn {
+            background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .apply-btn:hover { background: #2563eb; }
+        
+        .resume-section {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .resume-section h2 { margin-top: 0; color: white; font-size: 2rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🚀 Career Center</h1>
+        <div class="streak-counter" style="position:absolute; right:20px; top:20px; background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:20px; font-weight:bold; color:white; backdrop-filter:blur(4px);">🔥 0</div>
+    </header>
+
+    <div class="floating-bg">
+        <box-icon name='briefcase' color="white" class="float-item" style="top: 15%; left: 10%; width: 80px; height: 80px; animation-duration: 25s;"></box-icon>
+        <box-icon name='rocket' type='solid' color="white" class="float-item" style="top: 75%; left: 85%; width: 120px; height: 120px; animation-duration: 30s; animation-delay: -5s;"></box-icon>
+    </div>
+
+    <div class="career-container">
+        
+        <div class="resume-section">
+            <h2>Resume Review AI</h2>
+            <p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Upload your resume and get instant feedback on formatting, keywords, and impact.</p>
+            <button style="background: white; color: #059669; border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">Upload Resume</button>
+        </div>
+
+        <h2 style="margin-bottom: 20px;">Recommended Internships</h2>
+        
+        <div class="job-card">
+            <div class="job-info">
+                <h3>Frontend Developer Intern</h3>
+                <p>TechCorp Inc. • Remote</p>
+                <div class="tags">
+                    <span class="tag">React</span>
+                    <span class="tag">CSS</span>
+                    <span class="tag">Paid</span>
+                </div>
+            </div>
+            <button class="apply-btn">Apply Now</button>
+        </div>
+
+        <div class="job-card">
+            <div class="job-info">
+                <h3>Data Science Intern</h3>
+                <p>DataFlow Systems • New York, NY</p>
+                <div class="tags">
+                    <span class="tag">Python</span>
+                    <span class="tag">SQL</span>
+                    <span class="tag">Hybrid</span>
+                </div>
+            </div>
+            <button class="apply-btn">Apply Now</button>
+        </div>
+
+    </div>
+
+    <nav class="menu" role="navigation" aria-label="Main Menu">
+        <a href="front.html" class="link"><span class="link-icon">dashboard</span><span class="link-title">Dashboard</span></a>
+        <a href="classes.html" class="link"><span class="link-icon">live_tv</span><span class="link-title">Classes</span></a>
+        <a href="social.html" class="link"><span class="link-icon">group</span><span class="link-title">Social</span></a>
+        <a href="stu-ai.html" class="link"><span class="link-icon">smart_toy</span><span class="link-title">STU AI</span></a>
+        <a href="settings.html" class="link"><span class="link-icon">settings</span><span class="link-title">Settings</span></a>
+    </nav>
+    <script src="jsss.js"></script>
+</body>
+</html>

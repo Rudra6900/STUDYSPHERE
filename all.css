@@ -1,0 +1,277 @@
+
+:root {
+  --bg: #0f172a;
+  --menu-bg: rgba(15, 23, 42, 0.7);
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3b82f6;
+  --bg-card: rgba(30, 41, 59, 0.5);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --radius: 16px;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-hover: rgba(255, 255, 255, 0.08);
+  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --transition: 0.3s ease;
+  --logo-gradient: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Outfit", sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* Motion Graphics Background */
+.floating-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: -1;
+}
+.float-item {
+  position: absolute;
+  animation: float 20s infinite linear;
+  opacity: 0.15;
+}
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -50px) rotate(120deg); }
+  66% { transform: translate(-20px, 20px) rotate(240deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+/* Menu */
+.menu {
+  padding: 1rem;
+  background: var(--menu-bg);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  gap: 100px;
+  margin-bottom: 1rem;
+  position: fixed;
+  bottom: 0px; 
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 60px;
+  height: 50px;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+}
+
+.link:hover,
+.link:focus-visible {
+  width: 150px;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.link-icon {
+  font-family: "Material Symbols Rounded";
+  font-size: 26px;
+  margin-left: 16px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.link:hover .link-icon {
+  transform: scale(1.1);
+}
+
+/* Active link (default visible view) */
+.link.active {
+  width: 150px;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.link.active .link-icon {
+  transform: scale(1.1);
+}
+
+.link.active .link-title {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Hovered state (used by JS for smoother control) */
+.link.hovered {
+  width: 150px;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.link.hovered .link-icon {
+  transform: scale(1.1);
+}
+
+.link.hovered .link-title {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.link-title {
+  margin-left: 12px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity var(--transition), transform var(--transition);
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.link:hover .link-title,
+.link:focus-visible .link-title {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Dashboard Cards */
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.card {
+  background: var(--menu-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px 30px 10px 50px;
+  width: 300px;
+  text-align: center;
+  color: var(--text);
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  border-color: var(--accent);
+}
+
+.card h2 {
+  color: #60a5fa;
+  margin-bottom: 1rem;
+}
+.card p {
+  color: var(--muted);
+}
+
+.card button {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.card button:hover {
+  background-color: #1e4db7;
+}
+header {
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  position: fixed;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  z-index: 1000;
+  justify-content: left;
+  align-items: center;
+  text-align: left;
+  background: linear-gradient(to bottom, rgba(15,23,42,0.9), transparent);
+  backdrop-filter: blur(4px);
+  border-radius: 1px;
+}
+
+header h1 {
+  background: var(--logo-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-left: 10px;
+  font-size: 24px;
+}
+
+/* --- GLOBAL MODAL FIX (Prevents accidental "previews" of popups) --- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 5000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Responsive Menu */
+@media (max-width: 600px) {
+    .menu { gap: 0; justify-content: space-between; width: 94%; left: 3%; padding: 0.5rem; }
+    .link { width: 40px; justify-content: center; }
+    .link-icon { margin-left: 0; }
+    .link-title { display: none; }
+    .link:hover, .link.active { width: 40px; }
+}

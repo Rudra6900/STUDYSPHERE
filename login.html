@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySphere - Student Login</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <script>
+        // Clear previous session data to prevent Teacher names showing on Student Dashboard
+        localStorage.removeItem('username');
+        localStorage.removeItem('avatar');
+        localStorage.removeItem('isNewUser');
+        localStorage.removeItem('teacher_notification');
+        sessionStorage.removeItem('username');
+        sessionStorage.removeItem('avatar');
+        sessionStorage.removeItem('isNewUser');
+    </script>
+    <a href="home.html" style="position: absolute; top: 20px; left: 20px; text-decoration: none; color: white; font-weight: 500; display: flex; align-items: center; gap: 8px; z-index: 1000; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);">
+        <box-icon name='home-alt-2' color='#ffffff'></box-icon> Home
+    </a>
+    <div class="container">
+        <div class="curved-shape"></div>
+        <div class="curved-shape2"></div>
+
+        <div class="form-box Login">
+            <h2 class="animation" data-animation-d="0" data-animation-s="21">Login</h2>
+            <form action="#">
+                <div class="input-box animation" data-animation-d="1" data-animation-s="22">
+                    <input id="login-username" name="username" type="text" required>
+                    <label for="login-username">Username</label>
+                    <box-icon type='solid' name='user' color="gray"></box-icon>
+                </div>
+
+                <div class="input-box animation" data-animation-d="2" data-animation-s="23">
+                    <input id="login-password" name="password" type="password" required>
+                    <label for="login-password">Password</label>
+
+                    <button type="button" id="eyeball" aria-pressed="false" aria-label="Show password">
+                        <div class="eye"></div>
+                    </button>
+                    <div id="beam"></div>
+                </div>
+
+                <div class="regi-link animation" data-animation-d="2.5" data-animation-s="24">
+                    <p><a href="#" id="forgot-link">Forgot Password?</a></p>
+                </div>
+
+                <div class="input-box animation" data-animation-d="3" data-animation-s="24">
+                    <button class="btn" type="submit" >Login</button>
+                </div>
+
+               <div class="regi-link animation" data-animation-d="4" data-animation-s="25">
+                    <p>Don't have an account? <br> <a href="#" class="SignUpLink">Sign Up</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-content Login">
+            <h2 class="animation" data-animation-d="0" data-animation-s="20">Welcome Back!</h2>
+            <p class="animation" data-animation-d="1" data-animation-s="21">Continue your learning journey with personalized quizzes and AI support.</p>
+        </div>
+
+        <div class="form-box Register">
+            <h2 class="animation" data-animation-li="17" data-animation-s="0">Register</h2>
+            <form action="#">
+                <div class="input-box animation" data-animation-li="18" data-animation-s="1">
+                    <input id="reg-username" name="username" type="text" required>
+                    <label for="reg-username">Username</label>
+                    <box-icon type='solid' name='user' color="gray"></box-icon>
+                </div>
+
+                <div class="input-box animation" data-animation-li="19" data-animation-s="2">
+                    <input id="reg-email" name="email" type="email" required>
+                    <label for="reg-email">Email</label>
+                    <box-icon name='envelope' type='solid' color="gray"></box-icon>
+                </div>
+
+                <div class="input-box animation" data-animation-li="19" data-animation-s="3">
+                    <input id="reg-password" name="password" type="password" required>
+                    <label for="reg-password">Password</label>
+                    <box-icon name='lock-alt' type='solid' color="gray"></box-icon>
+                </div>
+
+                <div class="input-box animation" data-animation-li="20" data-animation-s="4">
+                    <div style="display: flex; gap: 10px; height: 100%;">
+                        <button class="btn" type="submit" name="role" value="student">Student</button>
+                        <button class="btn" type="submit" name="role" value="teacher">Teacher</button>
+                    </div>
+                </div>
+
+                <div class="regi-link animation" data-animation-li="21" data-animation-s="5">
+                    <p>Already have an account? <br> <a href="#" class="SignInLink">Sign In</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-content Register">
+            <h2 class="animation" data-animation-li="17" data-animation-s="0">Welcome!</h2>
+            <p class="animation" data-animation-li="18" data-animation-s="1">Start your academic success today. Join thousands of students learning smarter.</p>
+   </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

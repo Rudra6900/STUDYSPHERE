@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code IDE | StudySphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Outfit', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { display: flex; justify-content: space-between; padding: 15px 20px; background: #1e293b; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .btn { background: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .editor-container { display: flex; flex: 1; height: calc(100vh - 65px); }
+        .col { flex: 1; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+        .col-header { background: #334155; padding: 10px; font-size: 0.9rem; font-weight: bold; display: flex; justify-content: space-between; }
+        textarea { flex: 1; background: #1e293b; color: #e2e8f0; border: none; padding: 15px; font-family: monospace; font-size: 14px; outline: none; resize: none; }
+        iframe { flex: 1; background: white; border: none; width: 100%; height: 100%; }
+        select { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif; }
+        select option { background: #1e293b; color: white; }
+        .terminal { flex: 1; background: #000; color: #10b981; padding: 15px; font-family: monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display:flex; align-items:center; gap: 15px;">
+            <a href="front.html" style="color:#94a3b8; text-decoration:none;"><i class='bx bx-arrow-back'></i> Back</a>
+            <h2 style="margin:0; font-size: 1.2rem; color: #c4b5fd;"><i class='bx bx-code-alt'></i> Code IDE</h2>
+            <select id="lang-select" onchange="changeLanguage()">
+                <option value="frontend">Web Frontend (HTML/CSS/JS)</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+            </select>
+        </div>
+        <button class="btn" onclick="runCode()"><i class='bx bx-play'></i> Run Code</button>
+    </header>
+    <div class="editor-container">
+        <!-- Frontend Mode -->
+        <div id="frontend-editors" style="flex: 1; display: flex; flex-direction: column; width: 50%;">
+            <div class="col" style="height: 33.33%;">
+                <div class="col-header"><span style="color:#ef4444;">HTML</span></div>
+                <textarea id="html-code"><h1>Hello StudySphere!</h1>
+<p>Write some code to see it live.</p></textarea>
+            </div>
+            <div class="col" style="height: 33.33%;">
+                <div class="col-header"><span style="color:#3b82f6;">CSS</span></div>
+                <textarea id="css-code">body { font-family: sans-serif; text-align: center; margin-top: 50px; }</textarea>
+            </div>
+            <div class="col" style="height: 33.33%;">
+                <div class="col-header"><span style="color:#f59e0b;">JS</span></div>
+                <textarea id="js-code">console.log("IDE is ready!");</textarea>
+            </div>
+        </div>
+        
+        <!-- Universal Mode -->
+        <div id="universal-editor" style="flex: 1; display: none; flex-direction: column; width: 50%;">
+            <div class="col" style="height: 100%;">
+                <div class="col-header"><span style="color:#c4b5fd;" id="uni-lang-label">Python Editor</span></div>
+                <textarea id="universal-code"></textarea>
+            </div>
+        </div>
+
+        <!-- Output Area -->
+        <div class="col" style="flex: 1; width: 50%;">
+            <div class="col-header">Output</div>
+            <iframe id="output-frame" style="display: block;"></iframe>
+            <div id="terminal-output" class="terminal" style="display: none;"></div>
+        </div>
+    </div>
+    <script>
+        const templates = {
+            'python': { name: 'Python', lang: 'python', version: '*', code: 'print("Hello, StudySphere!")' },
+            'java': { name: 'Java', lang: 'java', version: '*', code: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, StudySphere!");\n    }\n}' },
+            'cpp': { name: 'C++', lang: 'cpp', version: '*', code: '#include <iostream>\n\nint main() {\n    std::cout << "Hello, StudySphere!" << std::endl;\n    return 0;\n}' },
+            'c': { name: 'C', lang: 'c', version: '*', code: '#include <stdio.h>\n\nint main() {\n    printf("Hello, StudySphere!\\n");\n    return 0;\n}' }
+        };
+
+        function changeLanguage() {
+            const mode = document.getElementById('lang-select').value;
+            if (mode === 'frontend') {
+                document.getElementById('frontend-editors').style.display = 'flex';
+                document.getElementById('universal-editor').style.display = 'none';
+                document.getElementById('output-frame').style.display = 'block';
+                document.getElementById('terminal-output').style.display = 'none';
+            } else {
+                document.getElementById('frontend-editors').style.display = 'none';
+                document.getElementById('universal-editor').style.display = 'flex';
+                document.getElementById('output-frame').style.display = 'none';
+                document.getElementById('terminal-output').style.display = 'block';
+                
+                document.getElementById('uni-lang-label').textContent = templates[mode].name + " Editor";
+                document.getElementById('universal-code').value = templates[mode].code;
+                document.getElementById('terminal-output').textContent = "Ready.";
+            }
+        }
+
+        async function runCode() {
+            const mode = document.getElementById('lang-select').value;
+            if (mode === 'frontend') {
+                const html = document.getElementById('html-code').value;
+                const css = "<style>" + document.getElementById('css-code').value + "</style>";
+                const js = "<script>" + document.getElementById('js-code').value + "<\/script>";
+                
+                // Visual Console Override for Beginners
+                const consoleOverride = `<script>
+                    window.onerror = function(e) { document.body.innerHTML += '<div style="color:red; font-family:monospace; margin-top:10px;">Error: ' + e + '</div>'; };
+                    console.log = function(...args) {
+                        document.body.innerHTML += '<div style="font-family:monospace; color:#3b82f6; margin-top:5px;">> ' + args.join(' ') + '</div>';
+                    };
+                <\/script>`;
+
+                const frame = document.getElementById('output-frame').contentWindow.document;
+                frame.open();
+                frame.write(html + css + consoleOverride + js);
+                frame.close();
+            } else {
+                const code = document.getElementById('universal-code').value;
+                const outputEl = document.getElementById('terminal-output');
+                outputEl.textContent = 'Compiling and Running...';
+                
+                // Wandbox API Payload (Free, Public)
+                const compilerMap = {
+                    'python': 'cpython-head',
+                    'java': 'openjdk-head',
+                    'cpp': 'gcc-head',
+                    'c': 'gcc-head'
+                };
+                const reqBody = {
+                    code: code,
+                    compiler: compilerMap[templates[mode].lang]
+                };
+                
+                try {
+                    const apiBase = (window.location.port === '5500' || window.location.port === '5501' || window.location.protocol === 'file:') ? 'http://localhost/practice/' : '';
+                    const res = await fetch(apiBase + 'compile.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(reqBody)
+                    });
+                    const data = await res.json();
+                    if (data.status == 0) { // status '0' means success
+                        outputEl.textContent = data.program_output || data.program_message || 'Execution finished with no output.';
+                    } else {
+                        outputEl.textContent = 'Execution Error:\n' + (data.compiler_error || data.program_error || 'Unknown error. Check browser console for details.');
+                        console.error("Wandbox API Error:", data);
+                    }
+                } catch(e) {
+                    outputEl.textContent = `Execution Failed.\nThis could be a temporary network issue or a problem with the compilation server.\n\nError: ${e.message}\n\nTip: Web Frontend (HTML/CSS/JS) runs locally and is always available.`;
+                }
+            }
+        }
+        // Run initially
+        runCode();
+    </script>
+</body>
+</html>
